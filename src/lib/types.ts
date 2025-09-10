@@ -196,7 +196,7 @@ export interface BrainstormingSubmission extends DocumentData {
     submittedAt: Timestamp;
 }
 
-export interface Message extends DocumentData {
+export interface Notification extends DocumentData {
     id: string;
     text: string;
     isRead: boolean;

@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, MessageSquareWarning, Info } from 'lucide-react';
-import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
+import { getUnreadNotifications, markNotificationAsRead } from '@/lib/notifications';
 import { getRandomFeatureTip } from '@/lib/home';
 
 export type AccessLevel = 'full' | 'limited';
@@ -65,24 +66,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('study-buddy-access-level', accessLevel);
         localStorage.setItem('study-buddy-app-locked', 'false'); // Unlock the app
 
-        // --- Fetch messages on successful login ---
+        // --- Fetch notifications on successful login ---
         if (accessLevel === 'full') {
             const isProduction = window.location.href.includes("study-buddy-two-phi.vercel.app");
             if (isProduction) {
-                 getUnreadMessages().then(async messages => {
-                    if (messages.length > 0) {
-                        messages.forEach(async (msg) => {
+                 getUnreadNotifications().then(async notifications => {
+                    if (notifications.length > 0) {
+                        notifications.forEach(async (notif) => {
                             toast({
                                 title: (
                                     <div className="flex items-center gap-2">
                                         <MessageSquareWarning className="h-5 w-5 text-primary" />
-                                        <span>New Message</span>
+                                        <span>New Notification</span>
                                     </div>
                                 ),
-                                description: msg.text,
+                                description: notif.text,
                                 duration: 10000,
                             });
-                            await markMessageAsRead(msg.id);
+                            await markNotificationAsRead(notif.id);
                         });
                     } else {
                         // If no unread messages, show a feature tip
@@ -99,11 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         });
                     }
                 }).catch(error => {
-                    console.error("Failed to check for messages or tips on login:", error);
+                    console.error("Failed to check for notifications or tips on login:", error);
                 });
             }
         }
-        // --- End of message fetching logic ---
+        // --- End of notification fetching logic ---
 
     } catch (e) {
         console.error("Session/Local storage not available.");
