@@ -3,8 +3,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MessageSquareWarning } from 'lucide-react';
+import { Loader2, MessageSquareWarning, Info } from 'lucide-react';
 import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
+import { getRandomFeatureTip } from '@/lib/home';
 
 export type AccessLevel = 'full' | 'limited';
 
@@ -68,22 +69,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (accessLevel === 'full') {
             const isProduction = window.location.href.includes("study-buddy-two-phi.vercel.app");
             if (isProduction) {
-                 getUnreadMessages().then(messages => {
-                    messages.forEach(async (msg) => {
+                 getUnreadMessages().then(async messages => {
+                    if (messages.length > 0) {
+                        messages.forEach(async (msg) => {
+                            toast({
+                                title: (
+                                    <div className="flex items-center gap-2">
+                                        <MessageSquareWarning className="h-5 w-5 text-primary" />
+                                        <span>New Message</span>
+                                    </div>
+                                ),
+                                description: msg.text,
+                                duration: 10000,
+                            });
+                            await markMessageAsRead(msg.id);
+                        });
+                    } else {
+                        // If no unread messages, show a feature tip
+                        const featureTip = await getRandomFeatureTip();
                         toast({
                             title: (
                                 <div className="flex items-center gap-2">
-                                    <MessageSquareWarning className="h-5 w-5 text-primary" />
-                                    <span>New Message</span>
+                                    <Info className="h-5 w-5 text-blue-500" />
+                                    <span>Did you know?</span>
                                 </div>
                             ),
-                            description: msg.text,
-                            duration: 10000,
+                            description: featureTip,
+                            duration: 12000,
                         });
-                        await markMessageAsRead(msg.id);
-                    });
+                    }
                 }).catch(error => {
-                    console.error("Failed to check for messages on login:", error);
+                    console.error("Failed to check for messages or tips on login:", error);
                 });
             }
         }
