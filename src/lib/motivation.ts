@@ -15,6 +15,9 @@ type MotivationMessage = {
  */
 export const markMotivationAsRead = async (collectionName: string, messageId: string): Promise<void> => {
     try {
+        if (!collectionName || messageId === 'fallback') {
+            return;
+        }
         const messageRef = doc(db, collectionName, messageId);
         await updateDoc(messageRef, {
             read: true
@@ -89,53 +92,79 @@ export const getRandomMotivationByMood = async (
 
 /**
  * Fetches a random message from the 'tinkering-messages' collection.
+ * It prioritizes unread messages and marks the fetched message as read.
  * @returns A random message string.
  */
 export const getTinkeringMessage = async (): Promise<string> => {
-    return getRandomMessageFromCollection('tinkering-messages', "Are you sure you're focusing on what's important right now?");
+    const messageData = await getRandomMessageFromCollection('tinkering-messages', "Are you sure you're focusing on what's important right now?");
+    await markMotivationAsRead(messageData.collectionName, messageData.id);
+    return messageData.text;
 };
 
 /**
  * Fetches a random message from the 'threatening-messages' collection.
+ * It prioritizes unread messages and marks the fetched message as read.
  * @returns A random message string.
  */
 export const getThreateningMessage = async (): Promise<string> => {
-    return getRandomMessageFromCollection('threatening-messages', "Okay, that's enough. Get back to work.");
+    const messageData = await getRandomMessageFromCollection('threatening-messages', "Okay, that's enough. Get back to work.");
+    await markMotivationAsRead(messageData.collectionName, messageData.id);
+    return messageData.text;
 };
 
 
 /**
  * Fetches a random message from the 'worried-messages' collection for when the user is persistently worried.
+ * It prioritizes unread messages and marks the fetched message as read.
  * @returns A random message string.
  */
 export const getWorriedStreakMessage = async (): Promise<string> => {
-    return getRandomMessageFromCollection('worried-messages', "It seems like you've been worried for a few days. Remember to be kind to yourself. It's okay to take a break.");
+    const messageData = await getRandomMessageFromCollection('worried-messages', "It seems like you've been worried for a few days. Remember to be kind to yourself. It's okay to take a break.");
+    await markMotivationAsRead(messageData.collectionName, messageData.id);
+    return messageData.text;
 };
 
 
 /**
- * A generic helper function to fetch a random message from any given collection.
- * This one does not use the read/unread logic.
+ * A generic helper function to fetch a random message from any given collection, prioritizing unread messages.
  * @param collectionName - The name of the Firestore collection.
  * @param defaultMessage - A fallback message if the collection is empty or an error occurs.
- * @returns A random message string.
+ * @returns A random message object including its text, id, and collection name.
  */
-const getRandomMessageFromCollection = async (collectionName: string, defaultMessage: string): Promise<string> => {
+const getRandomMessageFromCollection = async (collectionName: string, defaultMessage: string): Promise<MotivationMessage> => {
+    const fallbackMessage: MotivationMessage = {
+        id: 'fallback',
+        text: defaultMessage,
+        collectionName: '',
+    };
+    
     try {
         const messagesRef = collection(db, collectionName);
-        const q = query(messagesRef, limit(50));
-        const querySnapshot = await getDocs(q);
+        
+        // 1. Query for unread messages first
+        const unreadQuery = query(messagesRef, where('read', '!=', true));
+        let querySnapshot = await getDocs(unreadQuery);
+
+        // 2. If no unread messages, query for ALL messages in the collection
+        if (querySnapshot.empty) {
+            querySnapshot = await getDocs(messagesRef);
+        }
 
         if (querySnapshot.empty) {
             console.warn(`Firestore collection '${collectionName}' is empty or does not exist.`);
-            return defaultMessage;
+            return fallbackMessage;
         }
 
-        const messages = querySnapshot.docs.map(doc => doc.data().message as string);
+        const messages = querySnapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            text: doc.data().message as string,
+            collectionName: collectionName
+        }));
+
         const randomIndex = Math.floor(Math.random() * messages.length);
-        return messages[randomIndex] || defaultMessage;
+        return messages[randomIndex] || fallbackMessage;
     } catch (error) {
         console.error(`Error fetching from ${collectionName}:`, error);
-        return defaultMessage;
+        return fallbackMessage;
     }
 }
