@@ -4,7 +4,7 @@
 // 2. Run from the root of your project: tsx ./scripts/populateThreatTinkerReadStatus.ts
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, writeBatch, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, writeBatch, getDocs, doc } from 'firebase/firestore';
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
@@ -41,10 +41,9 @@ const main = async () => {
                 continue;
             }
 
-            querySnapshot.forEach(doc => {
-                // Check if the 'read' field already exists to avoid unnecessary writes
-                if (doc.data().read === undefined) {
-                    batch.update(doc.ref, { read: false });
+            querySnapshot.forEach(docSnap => {
+                if (docSnap.data().read === undefined) {
+                    batch.update(docSnap.ref, { read: false });
                     updatedCount++;
                 }
             });

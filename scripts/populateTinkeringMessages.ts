@@ -22,11 +22,11 @@ const db = getFirestore(app);
 console.log("Firebase initialized for script.");
 
 const tinkeringMessages = [
-    { message: "Are you trying to find a secret message? The real secret is in your textbook. Go find it!" },
-    { message: "Hey, are you feeling okay? This isn't a game. Let's focus on the actual goal." },
-    { message: "I see you're clicking a lot. Is your mouse okay, or are you just avoiding that tricky chapter?" },
-    { message: "Remember, the goal is to conquer JEE, not to test the limits of this button. Let's get back to it." },
-    { message: "This is fun, but you know what's more fun? Solving a problem you've been stuck on. Give it a try." }
+    { message: "Are you trying to find a secret message? The real secret is in your textbook. Go find it!", read: false },
+    { message: "Hey, are you feeling okay? This isn't a game. Let's focus on the actual goal.", read: false },
+    { message: "I see you're clicking a lot. Is your mouse okay, or are you just avoiding that tricky chapter?", read: false },
+    { message: "Remember, the goal is to conquer JEE, not to test the limits of this button. Let's get back to it.", read: false },
+    { message: "This is fun, but you know what's more fun? Solving a problem you've been stuck on. Give it a try.", read: false }
 ];
 
 const main = async () => {

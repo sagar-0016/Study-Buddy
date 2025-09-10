@@ -22,11 +22,11 @@ const db = getFirestore(app);
 console.log("Firebase initialized for script.");
 
 const threateningMessages = [
-    { message: "Okay, that's enough. If you click again, I'm hiding your physics notes. Get back to work." },
-    { message: "This is your final warning. Stop messing around or I'll replace your schedule with 12 hours of just Inorganic Chemistry." },
-    { message: "Don't make me do it. I have the ability to reset all your syllabus progress. Now, go solve some PYQs." },
-    { message: "I'm not kidding. The next click will log you out and you'll have to re-verify the device. Is that what you want?" },
-    { message: "You're playing a dangerous game. Focus now, or I'll tell Saurabh you're not studying." }
+    { message: "Okay, that's enough. If you click again, I'm hiding your physics notes. Get back to work.", read: false },
+    { message: "This is your final warning. Stop messing around or I'll replace your schedule with 12 hours of just Inorganic Chemistry.", read: false },
+    { message: "Don't make me do it. I have the ability to reset all your syllabus progress. Now, go solve some PYQs.", read: false },
+    { message: "I'm not kidding. The next click will log you out and you'll have to re-verify the device. Is that what you want?", read: false },
+    { message: "You're playing a dangerous game. Focus now, or I'll tell Saurabh you're not studying.", read: false }
 ];
 
 const main = async () => {
