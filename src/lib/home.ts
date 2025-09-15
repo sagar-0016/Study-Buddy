@@ -1,6 +1,7 @@
 
+
 import { db } from './firebase';
-import { collection, getDocs, query, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, limit, doc, getDoc, where, writeBatch, updateDoc } from 'firebase/firestore';
 
 
 /**
@@ -50,24 +51,55 @@ export const getRandomOneLiner = async (): Promise<string> => {
 };
 
 /**
- * Fetches a random feature tip from the 'features' collection.
+ * Fetches a random feature tip from the 'features' collection, prioritizing unread tips.
+ * If all are read, it resets them and fetches one. Marks the fetched tip as read.
  * @returns A random feature tip string from the collection.
  */
 export const getRandomFeatureTip = async (): Promise<string> => {
+    const defaultTip = "Check out the Syllabus Analysis page to prioritize your studies based on chapter weightage.";
     try {
         const featuresRef = collection(db, 'features');
-        const q = query(featuresRef, limit(50));
-        const querySnapshot = await getDocs(q);
 
+        // 1. Try to get an unread tip
+        const unreadQuery = query(featuresRef, where('read', '==', false), limit(50));
+        let querySnapshot = await getDocs(unreadQuery);
+
+        // 2. If no unread tips, reset all and fetch again
         if (querySnapshot.empty) {
-            return "You can customize the motivation messages in the Settings page.";
+            const allDocsSnapshot = await getDocs(featuresRef);
+            if (allDocsSnapshot.empty) {
+                return defaultTip; // Collection is empty
+            }
+            
+            // Reset all to unread
+            const batch = writeBatch(db);
+            allDocsSnapshot.docs.forEach(doc => {
+                batch.update(doc.ref, { read: false });
+            });
+            await batch.commit();
+
+            // Fetch again from the now unread tips
+            querySnapshot = await getDocs(unreadQuery);
+        }
+        
+        if (querySnapshot.empty) {
+             return defaultTip; // Should not happen if reset logic works
         }
 
-        const tips = querySnapshot.docs.map(doc => doc.data().text as string);
+        const tips = querySnapshot.docs.map(doc => ({ id: doc.id, text: doc.data().text as string }));
         const randomIndex = Math.floor(Math.random() * tips.length);
-        return tips[randomIndex];
+        const selectedTip = tips[randomIndex];
+        
+        // 3. Mark the selected tip as read
+        if (selectedTip && selectedTip.id) {
+            const tipRef = doc(db, 'features', selectedTip.id);
+            await updateDoc(tipRef, { read: true });
+        }
+
+        return selectedTip.text;
+
     } catch (error) {
         console.error(`Error fetching feature tips:`, error);
-        return "Check out the Syllabus Analysis page to prioritize your studies based on chapter weightage.";
+        return defaultTip;
     }
 };

@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // --- Fetch notifications on successful login ---
         if (accessLevel === 'full') {
-            const isProduction = window.location.href.includes("study-buddy-two-phi.vercel.app");
+            const isProduction = window.location.href.includes("https://study-buddy-two-phi.vercel.app");
             if (isProduction) {
                  getUnreadNotifications().then(async notifications => {
                     if (notifications.length > 0) {
