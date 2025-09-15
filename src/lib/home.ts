@@ -52,38 +52,20 @@ export const getRandomOneLiner = async (): Promise<string> => {
 
 /**
  * Fetches a random feature tip from the 'features' collection, prioritizing unread tips.
- * If all are read, it resets them and fetches one. Marks the fetched tip as read.
- * @returns A random feature tip string from the collection.
+ * If all tips have been read, it returns null. Marks the fetched tip as read.
+ * @returns A random feature tip string or null if all have been read.
  */
-export const getRandomFeatureTip = async (): Promise<string> => {
-    const defaultTip = "Check out the Syllabus Analysis page to prioritize your studies based on chapter weightage.";
+export const getRandomFeatureTip = async (): Promise<string | null> => {
     try {
         const featuresRef = collection(db, 'features');
 
         // 1. Try to get an unread tip
         const unreadQuery = query(featuresRef, where('read', '==', false), limit(50));
-        let querySnapshot = await getDocs(unreadQuery);
-
-        // 2. If no unread tips, reset all and fetch again
-        if (querySnapshot.empty) {
-            const allDocsSnapshot = await getDocs(featuresRef);
-            if (allDocsSnapshot.empty) {
-                return defaultTip; // Collection is empty
-            }
-            
-            // Reset all to unread
-            const batch = writeBatch(db);
-            allDocsSnapshot.docs.forEach(doc => {
-                batch.update(doc.ref, { read: false });
-            });
-            await batch.commit();
-
-            // Fetch again from the now unread tips
-            querySnapshot = await getDocs(unreadQuery);
-        }
+        const querySnapshot = await getDocs(unreadQuery);
         
+        // If no unread tips, return null to prevent showing any tip.
         if (querySnapshot.empty) {
-             return defaultTip; // Should not happen if reset logic works
+             return null;
         }
 
         const tips = querySnapshot.docs.map(doc => ({ id: doc.id, text: doc.data().text as string }));
@@ -100,6 +82,6 @@ export const getRandomFeatureTip = async (): Promise<string> => {
 
     } catch (error) {
         console.error(`Error fetching feature tips:`, error);
-        return defaultTip;
+        return null;
     }
 };
