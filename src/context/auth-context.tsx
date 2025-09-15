@@ -88,16 +88,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     } else {
                         // If no unread messages, show a feature tip
                         const featureTip = await getRandomFeatureTip();
-                        toast({
-                            title: (
-                                <div className="flex items-center gap-2">
-                                    <Info className="h-5 w-5 text-blue-500" />
-                                    <span>Did you know?</span>
-                                </div>
-                            ),
-                            description: featureTip,
-                            duration: 12000,
-                        });
+                        if (featureTip) { // Check if a tip was actually returned
+                            toast({
+                                title: (
+                                    <div className="flex items-center gap-2">
+                                        <Info className="h-5 w-5 text-blue-500" />
+                                        <span>Did you know?</span>
+                                    </div>
+                                ),
+                                description: featureTip,
+                                duration: 12000,
+                            });
+                        }
                     }
                 }).catch(error => {
                     console.error("Failed to check for notifications or tips on login:", error);
