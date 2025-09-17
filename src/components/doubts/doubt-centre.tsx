@@ -157,14 +157,14 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
-                    <DialogDescription>
-                         Conversation about your doubt in {doubt.subject}.
+                     <div className="text-sm text-muted-foreground">
+                        Conversation about your doubt in {doubt.subject}.
                         {doubt.lectureTitle && (
                            <span className="block mt-1">
                                From lecture: <Badge variant="outline">{doubt.lectureTitle}</Badge>
                            </span>
                         )}
-                    </DialogDescription>
+                    </div>
                 </DialogHeader>
 
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
