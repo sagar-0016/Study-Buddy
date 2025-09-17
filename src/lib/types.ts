@@ -161,7 +161,7 @@ export interface DoubtMessage extends DocumentData {
     sender: 'user' | 'admin';
     createdAt: Timestamp;
     mediaUrl?: string;
-    mediaType?: 'image' | 'gif' | 'link';
+    mediaType?: 'image' | 'link';
 }
 
 export interface Doubt extends DocumentData {

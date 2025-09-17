@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -21,6 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
+import FloatingPdfViewer from '../lectures/floating-pdf-viewer';
 
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
@@ -121,6 +122,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
     const [isReplying, setIsReplying] = useState(false);
+    const [viewingPdf, setViewingPdf] = useState<string | null>(null);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -149,6 +151,57 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
         }
     };
     
+    const handleLinkClick = (message: DoubtMessage) => {
+        if (!message.mediaUrl) return;
+
+        if (message.mediaUrl.endsWith('.pdf')) {
+            setViewingPdf(message.mediaUrl);
+        } else {
+            window.open(message.mediaUrl, '_blank', 'noopener,noreferrer');
+        }
+    }
+
+    const MessageBubble = ({ message }: { message: DoubtMessage }) => {
+        const isUser = message.sender === 'user';
+        const isLink = message.mediaType === 'link';
+        const isImage = message.mediaType === 'image';
+    
+        return (
+            <div className={cn("flex w-full items-end gap-2", isUser ? "justify-end" : "justify-start")}>
+                {!isUser && <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" />}
+                
+                <div className={cn("p-3 rounded-lg relative", isUser ? "bg-primary/10" : "bg-muted")}>
+                    {isLink && message.mediaUrl ? (
+                        <button onClick={() => handleLinkClick(message)} className="flex items-center gap-2 text-left hover:underline">
+                            <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                            <span className="font-medium">{message.text}</span>
+                        </button>
+                    ) : (
+                        <p className="whitespace-pre-wrap">{message.text}</p>
+                    )}
+
+                    {isImage && message.mediaUrl && (
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full group relative">
+                                    <Image src={message.mediaUrl} alt="Doubt media" width={300} height={200} className="object-cover w-full" />
+                                </button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
+                        </Dialog>
+                    )}
+                    <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
+                </div>
+    
+                {isUser && (
+                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border-2 border-background object-cover">
+                        <Image src="/avatar.png" width={24} height={24} alt="User Avatar" />
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <Dialog onOpenChange={(open) => {
             if (open) fetchThread();
@@ -157,14 +210,14 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
-                     <div>
+                    <div>
                         <span className="text-sm text-muted-foreground">
                             Conversation about your doubt in {doubt.subject}.
                         </span>
                         {doubt.lectureTitle && (
-                           <div className="mt-1 text-sm text-muted-foreground">
-                               From lecture: <Badge variant="outline">{doubt.lectureTitle}</Badge>
-                           </div>
+                           <span className="block mt-1">
+                                <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
+                           </span>
                         )}
                     </div>
                 </DialogHeader>
@@ -172,35 +225,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
                         thread.map(message => (
-                             <div key={message.id} className={cn("flex w-full", message.sender === 'user' ? "justify-end" : "justify-start")}>
-                                <div className={cn("flex items-end gap-2", message.sender === 'user' ? 'flex-row-reverse' : 'flex-row')}>
-                                    {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : 
-                                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border-2 border-background">
-                                            <Image
-                                                src="/avatar.png"
-                                                width={24}
-                                                height={24}
-                                                alt="User Avatar"
-                                                className="object-cover"
-                                            />
-                                        </div>
-                                    }
-                                    <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
-                                        <p className="whitespace-pre-wrap">{message.text}</p>
-                                        {message.mediaUrl && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full group relative">
-                                                        <Image src={message.mediaUrl} alt="Doubt media" width={300} height={200} className="object-cover w-full" />
-                                                    </button>
-                                                </DialogTrigger>
-                                                <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
-                                            </Dialog>
-                                        )}
-                                        <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <MessageBubble key={message.id} message={message} />
                         ))
                     )}
                     <div ref={endOfMessagesRef} />
@@ -238,6 +263,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                         </Button>
                     </DialogFooter>
                 )}
+                 {viewingPdf && <FloatingPdfViewer src={viewingPdf} onClose={() => setViewingPdf(null)} />}
             </DialogContent>
         </Dialog>
     );
