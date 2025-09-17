@@ -87,9 +87,10 @@ const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDiv
         >
             <div onMouseDown={handleDragStart} className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg">
                 <div className="flex items-center gap-1">
-                    <Button asChild variant="ghost" size="sm" className="h-8">
+                     <Button asChild variant="ghost" size="icon" className="h-8 w-8">
                         <a href={url} target="_blank" rel="noopener noreferrer" onMouseDown={(e) => e.stopPropagation()}>
-                            <ExternalLink className="mr-2 h-4 w-4" /> Open in New Tab
+                            <ExternalLink className="h-4 w-4" />
+                             <span className="sr-only">Open in new tab</span>
                         </a>
                     </Button>
                 </div>
@@ -164,5 +165,3 @@ export default function FloatingBrowser({ url, onClose }: FloatingBrowserProps) 
         </div>
     );
 }
-
-    
