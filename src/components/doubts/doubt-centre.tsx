@@ -158,8 +158,8 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
                     <div className="space-y-1.5 text-sm text-muted-foreground">
-                        <p>Conversation about your doubt in {doubt.subject}.</p>
-                        {doubt.lectureTitle && (
+                        <span>Conversation about your doubt in {doubt.subject}.</span>
+                         {doubt.lectureTitle && (
                            <div className="flex items-center gap-2">
                                <span>From lecture:</span>
                                <Badge variant="outline">{doubt.lectureTitle}</Badge>
@@ -171,9 +171,9 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
                         thread.map(message => (
-                            <div key={message.id} className={cn("flex items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
+                             <div key={message.id} className={cn("flex items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
                                 {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
-                                <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
+                                <div className={cn("relative p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
                                     <p className="whitespace-pre-wrap">{message.text}</p>
                                     {message.mediaUrl && (
                                         <Dialog>
@@ -186,18 +186,19 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                                         </Dialog>
                                     )}
                                     <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
+                                
+                                     {message.sender === 'user' && (
+                                        <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full overflow-hidden flex-shrink-0 -mr-8 -mb-1 border-2 border-background">
+                                            <Image
+                                                src="/avatar.png"
+                                                width={24}
+                                                height={24}
+                                                alt="User Avatar"
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                {message.sender === 'user' ? (
-                                    <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                                        <Image
-                                            src="/avatar.png"
-                                            width={24}
-                                            height={24}
-                                            alt="User Avatar"
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                ) : null}
                             </div>
                         ))
                     )}
@@ -206,15 +207,27 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 
                 <Separator />
                 
-                <div className="space-y-2">
-                    <Label htmlFor={`reply-${doubt.id}`}>Your Reply</Label>
-                    <div className="flex gap-2">
-                        <Textarea id={`reply-${doubt.id}`} value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Type your reply..." rows={2} disabled={isReplying || doubt.isCleared} />
-                        <Button onClick={handleReply} disabled={!replyText || isReplying || doubt.isCleared} size="icon">
-                            {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
-                        </Button>
-                    </div>
+                 <div className="relative">
+                    <Textarea 
+                        id={`reply-${doubt.id}`} 
+                        value={replyText} 
+                        onChange={(e) => setReplyText(e.target.value)} 
+                        placeholder="Type your reply..." 
+                        rows={1}
+                        className="pr-12 resize-none"
+                        disabled={isReplying || doubt.isCleared} 
+                    />
+                    <Button 
+                        onClick={handleReply} 
+                        disabled={!replyText || isReplying || doubt.isCleared} 
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                    >
+                        {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
+                        <span className="sr-only">Send Reply</span>
+                    </Button>
                 </div>
+
 
                 {doubt.isAddressed && !doubt.isCleared && (
                     <DialogFooter className='border-t pt-4'>
