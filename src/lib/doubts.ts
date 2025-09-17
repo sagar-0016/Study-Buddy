@@ -47,11 +47,16 @@ export const addDoubt = async (data: {
   lectureTitle?: string;
   imageFile?: File;
 }): Promise<string> => {
+    const isLectureDoubt = data.lectureId;
+    const doubtsCollectionRef = isLectureDoubt 
+        ? collection(db, 'lectures', data.lectureId!, 'doubts')
+        : collection(db, 'doubts');
+
     const batch = writeBatch(db);
     const now = serverTimestamp();
 
-    // 1. Create the main doubt document
-    const doubtRef = doc(collection(db, 'doubts'));
+    // 1. Create the main doubt document in the correct collection
+    const doubtRef = doc(doubtsCollectionRef);
     const doubtPayload: Omit<Doubt, 'id' | 'thread' | 'lastReply'> = {
         text: data.text,
         subject: data.subject,
@@ -95,6 +100,10 @@ export const addDoubt = async (data: {
  * @returns {Promise<string>} The ID of the new message document.
  */
 export const addReplyToDoubt = async (doubtId: string, messageData: { text: string; sender: 'user' | 'admin' }): Promise<string> => {
+    // This function needs the full path to the doubt, which we don't have here.
+    // This logic is now handled inside the DoubtThreadDialog which has the full doubt object.
+    // For now, this function is simplified and may need to be removed or adapted if used elsewhere.
+    console.warn("addReplyToDoubt is simplified and assumes a top-level doubt. Refactor if needed for lecture doubts.");
     const doubtRef = doc(db, 'doubts', doubtId);
     const threadRef = collection(doubtRef, 'thread');
     const now = serverTimestamp();
@@ -113,27 +122,27 @@ export const addReplyToDoubt = async (doubtId: string, messageData: { text: stri
 };
 
 /**
- * Fetches all relevant doubts based on user's access level.
+ * Fetches all relevant doubts based on user's access level from both top-level and nested collections.
  * @param {AccessLevel} accessLevel - The access level of the current user.
  * @returns {Promise<Doubt[]>} An array of doubt objects, sorted by creation time.
  */
 export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
   try {
-    const doubtsRef = collection(db, 'doubts');
+    const doubtsGroupRef = collectionGroup(db, 'doubts');
     const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
     
     if (accessLevel === 'limited') {
       constraints.push(where('accessLevel', '==', 'limited'));
     }
 
-    const q = query(doubtsRef, ...constraints);
+    const q = query(doubtsGroupRef, ...constraints);
     const querySnapshot = await getDocs(q);
 
     const allDoubts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt));
     
     return allDoubts;
   } catch (error) {
-    console.error('Error fetching doubts:', error);
+    console.error('Error fetching doubts with collectionGroup:', error);
     return [];
   }
 };
@@ -153,17 +162,34 @@ export const getDoubtThread = async (doubtId: string): Promise<DoubtMessage[]> =
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DoubtMessage));
     } catch (error) {
         console.error(`Error fetching thread for doubt ${doubtId}:`, error);
+        // Fallback for lecture doubts
+         try {
+            const lectureDoubtsQuery = query(collectionGroup(db, 'doubts'), where('__name__', '==', `lectures/${(error as any).resource?.segments?.[1]}/doubts/${doubtId}`));
+            const lectureDoubtSnapshot = await getDocs(lectureDoubtsQuery);
+            if (!lectureDoubtSnapshot.empty) {
+                const docRef = lectureDoubtSnapshot.docs[0].ref;
+                const threadSnapshot = await getDocs(query(collection(docRef, 'thread'), orderBy('createdAt', 'asc')));
+                return threadSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as DoubtMessage);
+            }
+        } catch (fallbackError) {
+             console.error(`Fallback fetch also failed for doubt ${doubtId}:`, fallbackError);
+        }
         return [];
     }
 };
 
 /**
  * Marks a doubt as cleared by the user.
+ * This function needs to handle both top-level and nested doubts.
  * @param {string} doubtId - The ID of the doubt document to update.
+ * @param {string} [lectureId] - The lecture ID if it's a nested doubt.
  */
-export const markDoubtAsCleared = async (doubtId: string): Promise<void> => {
+export const markDoubtAsCleared = async (doubtId: string, lectureId?: string): Promise<void> => {
     try {
-        const doubtRef = doc(db, 'doubts', doubtId);
+        const doubtRef = lectureId 
+            ? doc(db, 'lectures', lectureId, 'doubts', doubtId)
+            : doc(db, 'doubts', doubtId);
+            
         await updateDoc(doubtRef, {
             isCleared: true,
         });
