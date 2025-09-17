@@ -198,3 +198,5 @@ export const markDoubtAsCleared = async (doubtId: string, lectureId?: string): P
         throw error;
     }
 }
+
+    
