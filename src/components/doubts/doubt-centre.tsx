@@ -230,70 +230,68 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     }
 
     return (
-        <>
-            {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
-            <Dialog onOpenChange={(open) => { if (open) fetchThread(); }}>
-                <DialogTrigger asChild>{children}</DialogTrigger>
-                <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
-                    <DialogHeader>
-                        <DialogTitle>{doubt.text}</DialogTitle>
-                        <div>
-                            <span className="text-sm text-muted-foreground">
-                                Conversation about your doubt in {doubt.subject}.
-                            </span>
-                            {doubt.lectureTitle && (
-                            <span className="block mt-1">
-                                    <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
-                            </span>
-                            )}
-                        </div>
-                    </DialogHeader>
-
-                    <div className="flex-grow overflow-y-auto pr-4 space-y-4">
-                        {isLoading ? <Skeleton className="h-20 w-full" /> : (
-                            thread.map(message => (
-                                <MessageBubble key={message.id} message={message} />
-                            ))
+        <Dialog onOpenChange={(open) => { if (open) fetchThread(); }}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
+                {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
+                <DialogHeader>
+                    <DialogTitle>{doubt.text}</DialogTitle>
+                    <div>
+                        <span className="text-sm text-muted-foreground">
+                            Conversation about your doubt in {doubt.subject}.
+                        </span>
+                        {doubt.lectureTitle && (
+                        <span className="block mt-1">
+                                <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
+                        </span>
                         )}
-                        <div ref={endOfMessagesRef} />
                     </div>
-                    
-                    <Separator />
-                    
-                    <div className="relative">
-                        <Textarea 
-                            id={`reply-${doubt.id}`} 
-                            value={replyText} 
-                            onChange={(e) => setReplyText(e.target.value)} 
-                            placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
-                            rows={1}
-                            className="pr-24 resize-none"
-                            disabled={isReplying || doubt.isCleared} 
-                        />
-                        <AddLinkDialog onLinkAdd={setLinkUrl} />
-                        <Button 
-                            onClick={handleReply} 
-                            disabled={!replyText || isReplying || doubt.isCleared} 
-                            size="icon"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                        >
-                            {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
-                            <span className="sr-only">Send Reply</span>
-                        </Button>
-                    </div>
+                </DialogHeader>
 
-
-                    {doubt.isAddressed && !doubt.isCleared && (
-                        <DialogFooter className='border-t pt-4'>
-                            <Button onClick={() => onCleared(doubt.id, doubt.lectureId)}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Mark as Cleared
-                            </Button>
-                        </DialogFooter>
+                <div className="flex-grow overflow-y-auto pr-4 space-y-4">
+                    {isLoading ? <Skeleton className="h-20 w-full" /> : (
+                        thread.map(message => (
+                            <MessageBubble key={message.id} message={message} />
+                        ))
                     )}
-                </DialogContent>
-            </Dialog>
-        </>
+                    <div ref={endOfMessagesRef} />
+                </div>
+                
+                <Separator />
+                
+                <div className="relative">
+                    <Textarea 
+                        id={`reply-${doubt.id}`} 
+                        value={replyText} 
+                        onChange={(e) => setReplyText(e.target.value)} 
+                        placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
+                        rows={1}
+                        className="pr-24 resize-none"
+                        disabled={isReplying || doubt.isCleared} 
+                    />
+                    <AddLinkDialog onLinkAdd={setLinkUrl} />
+                    <Button 
+                        onClick={handleReply} 
+                        disabled={!replyText || isReplying || doubt.isCleared} 
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                    >
+                        {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
+                        <span className="sr-only">Send Reply</span>
+                    </Button>
+                </div>
+
+
+                {doubt.isAddressed && !doubt.isCleared && (
+                    <DialogFooter className='border-t pt-4'>
+                        <Button onClick={() => onCleared(doubt.id, doubt.lectureId)}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Mark as Cleared
+                        </Button>
+                    </DialogFooter>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 };
 
