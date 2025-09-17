@@ -2,10 +2,10 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle2, AlertCircle, HelpCircle, Send, MessageSquareText } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, ChevronsUpDown, MessageSquareText, Reply, ArrowDown, User, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -13,20 +13,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getDoubts, addDoubt, markDoubtAsCleared } from '@/lib/doubts';
-import type { Doubt, AccessLevel } from '@/lib/types';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { getDoubts, addDoubt, markDoubtAsCleared, getDoubtThread, addReplyToDoubt } from '@/lib/doubts';
+import type { Doubt, DoubtMessage, AccessLevel } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
+
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
     const [text, setText] = useState('');
@@ -35,6 +31,8 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     const [isSaving, setIsSaving] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
+    const { pauseLocking } = useAuth();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const canSubmit = useMemo(() => text && subject, [text, subject]);
 
@@ -44,24 +42,26 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
         setImageFile(null);
     };
 
+    const triggerFileInput = () => {
+        toast({
+            title: "File Upload",
+            description: "The app will lock in 10 seconds. Please select your file.",
+            duration: 10000,
+        });
+        pauseLocking(10000); // Pause for 10 seconds
+        fileInputRef.current?.click();
+    }
+
     const handleSubmit = async () => {
         if (!canSubmit) return;
         setIsSaving(true);
         try {
-            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | null || 'limited';
-
-            await addDoubt({
-                text,
-                subject,
-                accessLevel,
-                imageFile: imageFile || undefined,
-            });
-            
+            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel || 'limited';
+            await addDoubt({ text, subject, accessLevel, imageFile: imageFile || undefined });
             toast({ title: "Success!", description: "Your doubt has been submitted." });
             onDoubtAdded();
             setIsOpen(false);
             resetForm();
-
         } catch (error) {
              toast({ title: "Error", description: "Could not submit your doubt.", variant: "destructive" });
         } finally {
@@ -76,16 +76,14 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
                 <DialogHeader>
                     <DialogTitle>Ask a New Doubt</DialogTitle>
                     <DialogDescription>
-                        Clearly describe your question. This will be visible in the main Doubt Centre.
+                        Clearly describe your question. It will appear in the Doubt Centre as a new thread.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                     <div className="grid gap-2">
+                    <div className="grid gap-2">
                         <Label htmlFor="subject">Subject</Label>
                         <Select onValueChange={setSubject} value={subject}>
-                            <SelectTrigger id="subject">
-                                <SelectValue placeholder="Select a subject" />
-                            </SelectTrigger>
+                            <SelectTrigger id="subject"><SelectValue placeholder="Select a subject" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Physics">Physics</SelectItem>
                                 <SelectItem value="Chemistry">Chemistry</SelectItem>
@@ -100,12 +98,16 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="image">Attach Image (Optional)</Label>
-                        <Input id="image" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} accept="image/*"/>
+                        <Button variant="outline" onClick={triggerFileInput} className="w-full">
+                            <ImageIcon className="mr-2 h-4 w-4" /> Choose Image
+                        </Button>
+                        <input ref={fileInputRef} id="image" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} accept="image/*" className="hidden"/>
+                         {imageFile && <p className="text-sm text-muted-foreground">Selected: {imageFile.name}</p>}
                     </div>
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                     <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
+                    <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                         Submit Doubt
                     </Button>
@@ -115,75 +117,123 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     );
 };
 
-const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (lectureId: string, doubtId: string) => void }) => {
+const DoubtThread = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (doubtId: string) => void }) => {
+    const [thread, setThread] = useState<DoubtMessage[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [replyText, setReplyText] = useState('');
+    const [isReplying, setIsReplying] = useState(false);
+    const { toast } = useToast();
+    const endOfMessagesRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        const fetchThread = async () => {
+            const fetchedThread = await getDoubtThread(doubt.id);
+            setThread(fetchedThread);
+            setIsLoading(false);
+        };
+        fetchThread();
+    }, [doubt.id]);
+
+    useEffect(() => {
+        endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [thread]);
+
+    const handleReply = async () => {
+        if (!replyText) return;
+        setIsReplying(true);
+        try {
+            await addReplyToDoubt(doubt.id, { text: replyText, sender: 'user' });
+            setReplyText('');
+            const updatedThread = await getDoubtThread(doubt.id);
+            setThread(updatedThread);
+        } catch (error) {
+            toast({ title: 'Error', description: 'Could not send reply.', variant: 'destructive' });
+        } finally {
+            setIsReplying(false);
+        }
+    };
+
     const getStatus = () => {
-        if (doubt.isCleared) return { text: 'Cleared by you', icon: CheckCircle2, color: 'text-green-600' };
-        if (doubt.isAddressed) return { text: 'Addressed', icon: AlertCircle, color: 'text-yellow-600' };
+        if (doubt.isCleared) return { text: 'Cleared by you', icon: CheckCircle, color: 'text-green-600' };
+        if (doubt.isAddressed) return { text: 'Admin Replied', icon: AlertCircle, color: 'text-yellow-600' };
         return { text: 'Pending', icon: HelpCircle, color: 'text-muted-foreground' };
     };
 
     const { text, icon: Icon, color } = getStatus();
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start gap-4">
-                    <div className='flex flex-col'>
-                        <CardDescription>
-                            {doubt.createdAt?.toDate ? formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
-                        </CardDescription>
-                        {doubt.lectureTitle && (
-                             <CardDescription className='font-semibold italic'>
-                                From: {doubt.lectureTitle}
-                            </CardDescription>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                         <Badge variant={doubt.subject === 'Physics' ? 'default' : doubt.subject === 'Chemistry' ? 'destructive' : 'secondary'}>
-                            {doubt.subject}
-                        </Badge>
-                        <Badge variant={doubt.isCleared ? 'default' : doubt.isAddressed ? 'outline' : 'secondary'} className="flex items-center gap-1">
-                            <Icon className={`h-3 w-3 ${color}`} />
-                            {text}
-                        </Badge>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <p className="whitespace-pre-wrap">{doubt.text}</p>
-                {doubt.imageUrl && (
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <button type="button" className="rounded-lg overflow-hidden border w-full max-w-xs group relative">
-                                <Image src={doubt.imageUrl} alt="Doubt image" width={300} height={200} className="object-cover w-full" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ImageIcon className="h-8 w-8 text-white" />
-                                </div>
-                            </button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl">
-                             <Image src={doubt.imageUrl} alt="Doubt image" width={800} height={600} className="rounded-lg object-contain" />
-                        </DialogContent>
-                    </Dialog>
-                )}
-
-                {doubt.adressedText && (
-                    <>
-                        <Separator />
-                        <div className="p-4 bg-accent/20 rounded-lg border-l-4 border-accent">
-                            <div className="flex items-center gap-2 mb-2">
-                                <MessageSquareText className="h-5 w-5 text-accent-foreground" />
-                                <h4 className="font-semibold text-accent-foreground">Response</h4>
+        <Card className="flex flex-col">
+            <Collapsible defaultOpen={true}>
+                <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-muted/50 rounded-t-lg">
+                        <div className="flex justify-between items-start gap-4">
+                            <div className='space-y-1.5'>
+                                <p className='font-semibold'>{doubt.text}</p>
+                                <CardDescription>
+                                    Last message {doubt.lastMessage?.timestamp ? formatDistanceToNow(doubt.lastMessage.timestamp.toDate(), { addSuffix: true }) : 'just now'}
+                                </CardDescription>
+                                 {doubt.lectureTitle && <Badge variant="outline">From: {doubt.lectureTitle}</Badge>}
                             </div>
-                            <p className="whitespace-pre-wrap text-muted-foreground">{doubt.adressedText}</p>
+                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                <Badge variant={doubt.subject === 'Physics' ? 'default' : doubt.subject === 'Chemistry' ? 'destructive' : 'secondary'}>
+                                    {doubt.subject}
+                                </Badge>
+                                <Badge variant={doubt.isCleared ? 'default' : doubt.isAddressed ? 'outline' : 'secondary'} className="flex items-center gap-1">
+                                    <Icon className={cn("h-3 w-3", color)} />
+                                    {text}
+                                </Badge>
+                                <div className="flex items-center text-muted-foreground">
+                                    <ChevronsUpDown className="h-4 w-4" />
+                                </div>
+                            </div>
                         </div>
-                    </>
-                )}
-            </CardContent>
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-4 max-h-[500px] overflow-y-auto">
+                        {isLoading ? <Skeleton className="h-20 w-full" /> : (
+                            thread.map(message => (
+                                <div key={message.id} className={cn("flex gap-3", message.sender === 'user' ? "justify-start" : "justify-end")}>
+                                    {message.sender === 'user' ? <User className="h-6 w-6 text-muted-foreground" /> : null}
+                                    <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-muted" : "bg-primary/10")}>
+                                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                                        {message.mediaUrl && (
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full group relative">
+                                                        <Image src={message.mediaUrl} alt="Doubt media" width={300} height={200} className="object-cover w-full" />
+                                                    </button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
+                                            </Dialog>
+                                        )}
+                                        <p className="text-xs text-muted-foreground/80 mt-2 text-right">{formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true })}</p>
+                                    </div>
+                                    {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary" /> : null}
+                                </div>
+                            ))
+                        )}
+                        <div ref={endOfMessagesRef} />
+                    </CardContent>
+
+                    <Separator />
+                    
+                    <div className="p-4 space-y-4">
+                        <Label htmlFor={`reply-${doubt.id}`}>Your Reply</Label>
+                        <div className="flex gap-2">
+                            <Textarea id={`reply-${doubt.id}`} value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Type your reply..." rows={1} disabled={isReplying || doubt.isCleared} />
+                            <Button onClick={handleReply} disabled={!replyText || isReplying || doubt.isCleared} size="icon">
+                                {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
+                            </Button>
+                        </div>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+            
             {doubt.isAddressed && !doubt.isCleared && (
-                 <CardFooter>
-                    <Button onClick={() => onCleared(doubt.lectureId!, doubt.id)}>
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                 <CardFooter className='border-t pt-4'>
+                    <Button onClick={() => onCleared(doubt.id)}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
                         Mark as Cleared
                     </Button>
                 </CardFooter>
@@ -191,7 +241,6 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (lectureId: 
         </Card>
     );
 };
-
 
 export default function DoubtCentre() {
     const [doubts, setDoubts] = useState<Doubt[]>([]);
@@ -210,16 +259,11 @@ export default function DoubtCentre() {
         fetchDoubts();
     }, [fetchDoubts]);
     
-    const handleMarkCleared = async (lectureId: string, doubtId: string) => {
+    const handleMarkCleared = async (doubtId: string) => {
         try {
-            if (!lectureId) {
-                const doubtRef = doc(db, 'doubts', doubtId);
-                await updateDoc(doubtRef, { isCleared: true });
-            } else {
-                await markDoubtAsCleared(lectureId, doubtId);
-            }
+            await markDoubtAsCleared(doubtId);
             setDoubts(prev => prev.map(d => d.id === doubtId ? { ...d, isCleared: true } : d));
-            toast({ title: 'Success', description: 'Doubt marked as cleared.' });
+            toast({ title: 'Success', description: 'Doubt thread marked as cleared.' });
         } catch(error) {
             toast({ title: 'Error', description: 'Could not update the doubt status.', variant: 'destructive' });
         }
@@ -248,14 +292,14 @@ export default function DoubtCentre() {
         return (
             <div className="space-y-4">
                 {doubts.map(doubt => (
-                    <DoubtCard key={doubt.id} doubt={doubt} onCleared={handleMarkCleared} />
+                    <DoubtThread key={doubt.id} doubt={doubt} onCleared={handleMarkCleared} />
                 ))}
             </div>
         )
     }
 
     return (
-         <div className="relative">
+         <div className="relative pb-24">
              {renderContent()}
             <div className="fixed bottom-8 right-8 z-50">
                <AddDoubtDialog onDoubtAdded={fetchDoubts}>

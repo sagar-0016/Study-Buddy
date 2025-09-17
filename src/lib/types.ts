@@ -156,19 +156,32 @@ export interface LectureFeedback extends DocumentData {
     submittedAt: Timestamp;
 }
 
-export interface Doubt extends DocumentData {
+export interface DoubtMessage extends DocumentData {
     id: string;
     text: string;
+    sender: 'user' | 'admin';
+    createdAt: Timestamp;
+    mediaUrl?: string;
+    mediaType?: 'image' | 'gif' | 'link';
+}
+
+export interface Doubt extends DocumentData {
+    id: string;
+    text: string; // The initial question
     subject: string;
     lectureId?: string;
     lectureTitle?: string;
-    imageUrl?: string;
-    isAddressed: boolean;
-    isCleared: boolean;
+    isAddressed: boolean; // Now means "has an admin replied?"
+    isCleared: boolean; // Now means "user has closed the thread"
     createdAt: Timestamp;
-    adressedText?: string;
     accessLevel: AccessLevel;
+    thread?: DoubtMessage[]; // For client-side state
+    lastMessage?: {
+        text: string;
+        timestamp: Timestamp;
+    }
 }
+
 
 export interface TechnicalHelp extends DocumentData {
     id:string;
@@ -212,4 +225,5 @@ export interface MoodLog extends DocumentData {
 export interface FeatureTip extends DocumentData {
     id: string;
     text: string;
+    read: boolean;
 }

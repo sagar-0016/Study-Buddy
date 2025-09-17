@@ -13,9 +13,10 @@ import {
   collectionGroup,
   where,
   QueryConstraint,
+  writeBatch,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import type { Doubt, AccessLevel } from './types';
+import type { Doubt, AccessLevel, DoubtMessage } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -32,7 +33,7 @@ const uploadDoubtImage = async (file: File): Promise<string> => {
 }
 
 /**
- * Adds a new doubt to a lecture's subcollection or the general doubts collection in Firestore.
+ * Adds a new doubt and its initial message to Firestore.
  * Handles optional image upload and includes access level.
  * @param data - The data for the new doubt.
  * @returns The ID of the newly created document.
@@ -45,79 +46,90 @@ export const addDoubt = async (data: {
   lectureTitle?: string;
   imageFile?: File;
 }): Promise<string> => {
-  try {
-    const payload: {
-        text: string;
-        subject: string;
-        accessLevel: AccessLevel;
-        isAddressed: boolean;
-        isCleared: boolean;
-        createdAt: any;
-        lectureId?: string;
-        lectureTitle?: string;
-        imageUrl?: string;
-    } = {
-      text: data.text,
-      subject: data.subject,
-      accessLevel: data.accessLevel,
-      isAddressed: false,
-      isCleared: false,
-      createdAt: serverTimestamp(),
+    const batch = writeBatch(db);
+    const now = serverTimestamp();
+
+    // 1. Create the main doubt document
+    const doubtRef = doc(collection(db, 'doubts'));
+    const doubtPayload: Omit<Doubt, 'id' | 'thread' | 'lastMessage'> = {
+        text: data.text,
+        subject: data.subject,
+        accessLevel: data.accessLevel,
+        isAddressed: false,
+        isCleared: false,
+        createdAt: now as Timestamp,
+        ...(data.lectureId && { lectureId: data.lectureId }),
+        ...(data.lectureTitle && { lectureTitle: data.lectureTitle }),
     };
+    batch.set(doubtRef, doubtPayload);
 
-    if (data.imageFile) {
-        payload.imageUrl = await uploadDoubtImage(data.imageFile);
-    }
+    // 2. Create the first message in the 'thread' subcollection
+    const threadRef = doc(collection(doubtRef, 'thread'));
+    const messagePayload: Omit<DoubtMessage, 'id'> = {
+        text: data.text,
+        sender: 'user',
+        createdAt: now as Timestamp,
+    };
     
-    let newDocRef;
-    if (data.lectureId && data.lectureTitle) {
-        // Lecture-specific doubt
-        payload.lectureId = data.lectureId;
-        payload.lectureTitle = data.lectureTitle;
-        const doubtsRef = collection(db, 'lectures', data.lectureId, 'doubts');
-        newDocRef = await addDoc(doubtsRef, payload);
-    } else {
-        // General doubt
-        const doubtsRef = collection(db, 'doubts');
-        newDocRef = await addDoc(doubtsRef, payload);
+    if (data.imageFile) {
+        messagePayload.mediaUrl = await uploadDoubtImage(data.imageFile);
+        messagePayload.mediaType = 'image';
     }
+    batch.set(threadRef, messagePayload);
 
-    return newDocRef.id;
-  } catch (error) {
-    console.error('Error adding doubt:', error);
-    throw error;
-  }
+    // 3. Update the main doubt doc with the last message info
+    batch.update(doubtRef, {
+        'lastMessage.text': data.text,
+        'lastMessage.timestamp': now,
+    });
+    
+    await batch.commit();
+    return doubtRef.id;
 };
 
+/**
+ * Adds a reply message to a doubt's thread.
+ * @param {string} doubtId - The ID of the doubt document.
+ * @param {Omit<DoubtMessage, 'id' | 'createdAt'>} messageData - The message data.
+ * @returns {Promise<string>} The ID of the new message document.
+ */
+export const addReplyToDoubt = async (doubtId: string, messageData: { text: string; sender: 'user' | 'admin' }): Promise<string> => {
+    const doubtRef = doc(db, 'doubts', doubtId);
+    const threadRef = collection(doubtRef, 'thread');
+    const now = serverTimestamp();
+    
+    const newDocRef = await addDoc(threadRef, {
+        ...messageData,
+        createdAt: now,
+    });
+    
+    await updateDoc(doubtRef, {
+        'lastMessage.text': messageData.text,
+        'lastMessage.timestamp': now,
+    });
+
+    return newDocRef.id;
+};
 
 /**
  * Fetches all relevant doubts based on user's access level.
- * Full access sees all doubts. Limited access sees only limited-access doubts.
- * This function correctly combines lecture-specific doubts and general doubts without duplication.
  * @param {AccessLevel} accessLevel - The access level of the current user.
- * @returns {Promise<Doubt[]>} An array of doubt objects.
+ * @returns {Promise<Doubt[]>} An array of doubt objects, sorted by the last message time.
  */
 export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
   try {
-    const allDoubtsQuery = query(collectionGroup(db, 'doubts'));
-
-    const accessConstraints: QueryConstraint[] = [];
+    const doubtsRef = collection(db, 'doubts');
+    const constraints: QueryConstraint[] = [orderBy('lastMessage.timestamp', 'desc')];
+    
     if (accessLevel === 'limited') {
-      accessConstraints.push(where('accessLevel', '==', 'limited'));
+      constraints.push(where('accessLevel', '==', 'limited'));
     }
 
-    const finalQuery = query(allDoubtsQuery, ...accessConstraints);
-    const querySnapshot = await getDocs(finalQuery);
+    const q = query(doubtsRef, ...constraints);
+    const querySnapshot = await getDocs(q);
 
     const allDoubts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt));
     
-    // Sort all doubts by creation date descending
-    allDoubts.sort((a, b) => {
-        const timeA = a.createdAt?.toDate().getTime() || 0;
-        const timeB = b.createdAt?.toDate().getTime() || 0;
-        return timeB - timeA;
-    });
-
     return allDoubts;
   } catch (error) {
     console.error('Error fetching doubts:', error);
@@ -127,13 +139,30 @@ export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
 
 
 /**
+ * Fetches all messages for a specific doubt thread.
+ * @param {string} doubtId - The ID of the doubt.
+ * @returns {Promise<DoubtMessage[]>} An array of message objects.
+ */
+export const getDoubtThread = async (doubtId: string): Promise<DoubtMessage[]> => {
+    try {
+        const threadRef = collection(db, 'doubts', doubtId, 'thread');
+        const q = query(threadRef, orderBy('createdAt', 'asc'));
+        const querySnapshot = await getDocs(q);
+
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DoubtMessage));
+    } catch (error) {
+        console.error(`Error fetching thread for doubt ${doubtId}:`, error);
+        return [];
+    }
+};
+
+/**
  * Marks a doubt as cleared by the user.
- * @param {string} lectureId - The ID of the parent lecture document.
  * @param {string} doubtId - The ID of the doubt document to update.
  */
-export const markDoubtAsCleared = async (lectureId: string, doubtId: string): Promise<void> => {
+export const markDoubtAsCleared = async (doubtId: string): Promise<void> => {
     try {
-        const doubtRef = doc(db, 'lectures', lectureId, 'doubts', doubtId);
+        const doubtRef = doc(db, 'doubts', doubtId);
         await updateDoc(doubtRef, {
             isCleared: true,
         });
