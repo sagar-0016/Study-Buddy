@@ -1,4 +1,5 @@
 
+
 import { DocumentData, Timestamp } from 'firebase/firestore';
 export type AccessLevel = 'full' | 'limited';
 
@@ -226,3 +227,5 @@ export interface FeatureTip extends DocumentData {
     text: string;
     read: boolean;
 }
+
+    

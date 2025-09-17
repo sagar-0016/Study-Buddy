@@ -21,7 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
-import FloatingPdfViewer from '../lectures/floating-pdf-viewer';
+import FloatingBrowser from '../shared/floating-browser';
 
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
@@ -122,7 +122,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
     const [isReplying, setIsReplying] = useState(false);
-    const [viewingPdf, setViewingPdf] = useState<string | null>(null);
+    const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -153,12 +153,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     
     const handleLinkClick = (message: DoubtMessage) => {
         if (!message.mediaUrl) return;
-
-        if (message.mediaUrl.endsWith('.pdf')) {
-            setViewingPdf(message.mediaUrl);
-        } else {
-            window.open(message.mediaUrl, '_blank', 'noopener,noreferrer');
-        }
+        setViewingUrl(message.mediaUrl);
     }
 
     const MessageBubble = ({ message }: { message: DoubtMessage }) => {
@@ -195,7 +190,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     
                 {isUser && (
                      <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border-2 border-background object-cover">
-                        <Image src="/avatar.png" width={24} height={24} alt="User Avatar" />
+                        <Image src="/avatar.png" width={24} height={24} alt="User Avatar" className="object-cover" />
                     </div>
                 )}
             </div>
@@ -263,7 +258,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                         </Button>
                     </DialogFooter>
                 )}
-                 {viewingPdf && <FloatingPdfViewer src={viewingPdf} onClose={() => setViewingPdf(null)} />}
+                 {viewingUrl && <FloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
             </DialogContent>
         </Dialog>
     );
@@ -375,3 +370,5 @@ export default function DoubtCentre() {
         </div>
     );
 }
+
+    

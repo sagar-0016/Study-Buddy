@@ -24,7 +24,7 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { format } from 'date-fns';
 import { useAuth } from '@/context/auth-context';
-import FloatingPdfViewer from './floating-pdf-viewer';
+import FloatingBrowser from '../shared/floating-browser';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -244,7 +244,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const [viewingPdfUrl, setViewingPdfUrl] = useState<string | null>(null);
+    const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { pauseLocking } = useAuth();
 
     const fetchNotes = useCallback(async () => {
@@ -315,15 +315,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
         const isUserUploaded = !note.name.startsWith("Sample");
 
         const handleClick = () => {
-            if (note.type === 'pdf') {
-                toast({
-                    title: "Loading PDF",
-                    description: "Please wait while the document is being prepared.",
-                });
-                setViewingPdfUrl(note.url);
-            } else {
-                window.open(note.url, '_blank', 'noopener,noreferrer');
-            }
+            setViewingUrl(note.url);
         };
 
         return (
@@ -344,8 +336,8 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
         );
     };
 
-    if (viewingPdfUrl) {
-        return <EmbeddedPdfViewer url={viewingPdfUrl} onBack={() => setViewingPdfUrl(null)} />
+    if (viewingUrl) {
+        return <FloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />
     }
 
     return (
@@ -573,3 +565,5 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         </div>
     )
 }
+
+    
