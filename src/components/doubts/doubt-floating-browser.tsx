@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { X, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '../ui/skeleton';
 
 interface DraggableResizableDivProps {
   children: React.ReactNode;
@@ -14,7 +15,18 @@ interface DraggableResizableDivProps {
 }
 
 const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDivProps) => {
-    const [position, setPosition] = useState({ x: 50, y: 50 });
+    const [position, setPosition] = useState(() => {
+        // Calculate the center position on initial render
+        if (typeof window !== 'undefined') {
+            const width = 800;
+            const height = 600;
+            const x = (window.innerWidth - width) / 2;
+            const y = (window.innerHeight - height) / 2;
+            return { x: Math.max(x, 0), y: Math.max(y, 0) };
+        }
+        return { x: 50, y: 50 };
+    });
+
     const [size, setSize] = useState({ width: 800, height: 600 });
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
@@ -76,15 +88,13 @@ const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDiv
 
     return (
         <div
-            className="fixed z-50 bg-card border shadow-2xl rounded-lg flex flex-col"
+            className="fixed z-[100] bg-card border shadow-2xl rounded-lg flex flex-col"
             style={{
                 left: `${position.x}px`,
                 top: `${position.y}px`,
                 width: `${size.width}px`,
                 height: `${size.height}px`,
             }}
-            // Stop propagation to prevent the backdrop from closing the window
-            onClick={(e) => e.stopPropagation()} 
         >
             <div onMouseDown={handleDragStart} className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg">
                 <div className="flex items-center gap-1">
@@ -143,7 +153,7 @@ export default function DoubtFloatingBrowser({ url, onClose }: FloatingBrowserPr
     const displayUrl = isPdf ? `/api/proxy-pdf?url=${encodeURIComponent(url)}` : url;
 
     return (
-        <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/30 z-[99] backdrop-blur-sm" onClick={onClose}>
             <DraggableResizableDiv onClose={onClose} url={url}>
                 <div className="relative w-full h-full">
                     {isLoading && (
@@ -159,8 +169,6 @@ export default function DoubtFloatingBrowser({ url, onClose }: FloatingBrowserPr
                         title="Floating Content"
                         onLoad={handleIframeLoad}
                         className={cn("w-full h-full border-0", isLoading && "opacity-0")}
-                        // Add a sandbox attribute for slightly better security, though it can break some sites
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
                     />
                 </div>
             </DraggableResizableDiv>
