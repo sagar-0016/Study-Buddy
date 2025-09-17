@@ -101,7 +101,16 @@ export const addDoubt = async (data: {
  * @param {Omit<DoubtMessage, 'id' | 'createdAt'>} messageData - The message data.
  * @returns {Promise<string>} The ID of the new message document.
  */
-export const addReplyToDoubt = async (doubtId: string, lectureId: string | undefined, messageData: { text: string; sender: 'user' | 'admin' }): Promise<string> => {
+export const addReplyToDoubt = async (
+    doubtId: string, 
+    lectureId: string | undefined, 
+    messageData: { 
+        text: string; 
+        sender: 'user' | 'admin';
+        mediaUrl?: string;
+        mediaType?: 'link';
+    }
+): Promise<string> => {
     const doubtPath = lectureId ? `lectures/${lectureId}/doubts/${doubtId}` : `doubts/${doubtId}`;
     const doubtRef = doc(db, doubtPath);
     const threadRef = collection(doubtRef, 'thread');

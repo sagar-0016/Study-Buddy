@@ -117,10 +117,39 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     );
 };
 
+const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
+    const [linkUrl, setLinkUrl] = useState('');
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="absolute right-12 top-1/2 -translate-y-1/2 h-8 w-8">
+                    <LinkIcon className="h-4 w-4" />
+                    <span className="sr-only">Add link</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Add a Link</DialogTitle>
+                    <DialogDescription>Paste the URL you want to share below.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="link-url">URL</Label>
+                    <Input id="link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://example.com" />
+                </div>
+                <DialogFooter>
+                    <Button onClick={() => { onLinkAdd(linkUrl); (document.querySelector('[data-radix-dialog-close]') as HTMLElement)?.click(); }}>Add Link</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, children: React.ReactNode }) => {
     const [thread, setThread] = useState<DoubtMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
+    const [linkUrl, setLinkUrl] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { toast } = useToast();
@@ -140,9 +169,21 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const handleReply = async () => {
         if (!replyText) return;
         setIsReplying(true);
+
+        const messageData: { text: string; sender: 'user' | 'admin'; mediaUrl?: string; mediaType?: 'link' } = {
+            text: replyText,
+            sender: 'user'
+        };
+
+        if (linkUrl) {
+            messageData.mediaUrl = linkUrl;
+            messageData.mediaType = 'link';
+        }
+
         try {
-            await addReplyToDoubt(doubt.id, doubt.lectureId, { text: replyText, sender: 'user' });
+            await addReplyToDoubt(doubt.id, doubt.lectureId, messageData);
             setReplyText('');
+            setLinkUrl('');
             await fetchThread(); // Re-fetch the thread
         } catch (error) {
             toast({ title: 'Error', description: 'Could not send reply.', variant: 'destructive' });
@@ -163,9 +204,9 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     
         return (
             <div className={cn("flex w-full items-end gap-2", isUser ? "justify-end" : "justify-start")}>
-                {!isUser && <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" />}
-                
-                <div className={cn("p-3 rounded-lg relative", isUser ? "bg-primary/10" : "bg-muted")}>
+                 {!isUser && <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0 self-start" />}
+                 
+                <div className={cn("p-3 rounded-lg relative max-w-sm", isUser ? "bg-primary/10" : "bg-muted")}>
                     {isLink && message.mediaUrl ? (
                         <button onClick={() => handleLinkClick(message)} className="flex items-center gap-2 text-left hover:underline">
                             <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
@@ -189,7 +230,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 </div>
     
                 {isUser && (
-                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border-2 border-background object-cover">
+                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 self-end">
                         <Image src="/avatar.png" width={24} height={24} alt="User Avatar" className="object-cover" />
                     </div>
                 )}
@@ -233,11 +274,12 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                         id={`reply-${doubt.id}`} 
                         value={replyText} 
                         onChange={(e) => setReplyText(e.target.value)} 
-                        placeholder="Type your reply..." 
+                        placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
                         rows={1}
-                        className="pr-12 resize-none"
+                        className="pr-24 resize-none"
                         disabled={isReplying || doubt.isCleared} 
                     />
+                    <AddLinkDialog onLinkAdd={setLinkUrl} />
                     <Button 
                         onClick={handleReply} 
                         disabled={!replyText || isReplying || doubt.isCleared} 
