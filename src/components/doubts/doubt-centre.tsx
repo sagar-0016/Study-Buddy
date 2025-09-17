@@ -162,9 +162,9 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                             Conversation about your doubt in {doubt.subject}.
                         </span>
                         {doubt.lectureTitle && (
-                           <span className="block mt-1 text-sm text-muted-foreground">
+                           <div className="mt-1 text-sm text-muted-foreground">
                                From lecture: <Badge variant="outline">{doubt.lectureTitle}</Badge>
-                           </span>
+                           </div>
                         )}
                     </div>
                 </DialogHeader>
@@ -172,10 +172,20 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
                         thread.map(message => (
-                             <div key={message.id} className={cn("flex w-full items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
-                                {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
-                                <div className="relative">
-                                    <div className={cn("p-3 rounded-lg", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
+                             <div key={message.id} className={cn("flex w-full", message.sender === 'user' ? "justify-end" : "justify-start")}>
+                                <div className={cn("flex items-end gap-2", message.sender === 'user' ? 'flex-row-reverse' : 'flex-row')}>
+                                    {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : 
+                                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border-2 border-background">
+                                            <Image
+                                                src="/avatar.png"
+                                                width={24}
+                                                height={24}
+                                                alt="User Avatar"
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    }
+                                    <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
                                         <p className="whitespace-pre-wrap">{message.text}</p>
                                         {message.mediaUrl && (
                                             <Dialog>
@@ -189,17 +199,6 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                                         )}
                                         <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
                                     </div>
-                                    {message.sender === 'user' && (
-                                        <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full overflow-hidden flex-shrink-0 -mr-8 -mb-1 border-2 border-background">
-                                            <Image
-                                                src="/avatar.png"
-                                                width={24}
-                                                height={24}
-                                                alt="User Avatar"
-                                                className="object-cover"
-                                            />
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         ))
