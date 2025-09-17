@@ -116,7 +116,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     );
 };
 
-const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, children: React.ReactNode, onOpenChange: (open: boolean) => void }) => {
+const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, children: React.ReactNode }) => {
     const [thread, setThread] = useState<DoubtMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
@@ -130,14 +130,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
         setThread(fetchedThread);
         setIsLoading(false);
     }, [doubt.id, doubt.lectureId]);
-
-    useEffect(() => {
-        if (onOpenChange) { // Assuming onOpenChange(true) means dialog opened
-             fetchThread();
-        }
-    }, [fetchThread, onOpenChange]);
-
-
+    
     useEffect(() => {
         endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [thread]);
@@ -158,8 +151,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
     
     return (
         <Dialog onOpenChange={(open) => {
-            onOpenChange(open);
-            if(open) fetchThread();
+            if (open) fetchThread();
         }}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
@@ -222,7 +214,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
     );
 };
 
-const DoubtCard = ({ doubt, onCleared, onThreadOpened }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, onThreadOpened: () => void }) => {
+const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void }) => {
     const getStatus = () => {
         if (doubt.isCleared) return { text: 'Cleared by you', icon: CheckCircle, color: 'text-green-600' };
         if (doubt.isAddressed) return { text: 'Admin Replied', icon: AlertCircle, color: 'text-yellow-600' };
@@ -232,7 +224,7 @@ const DoubtCard = ({ doubt, onCleared, onThreadOpened }: { doubt: Doubt, onClear
     const { text, icon: Icon, color } = getStatus();
 
     return (
-        <DoubtThreadDialog doubt={doubt} onCleared={onCleared} onOpenChange={(open) => open && onThreadOpened()}>
+        <DoubtThreadDialog doubt={doubt} onCleared={onCleared}>
             <Card className="cursor-pointer transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
                 <CardHeader>
                     <div className="flex justify-between items-start gap-4">
@@ -308,7 +300,7 @@ export default function DoubtCentre() {
         return (
             <div className="space-y-4">
                 {doubts.map(doubt => (
-                    <DoubtCard key={doubt.id} doubt={doubt} onCleared={handleMarkCleared} onThreadOpened={fetchDoubts} />
+                    <DoubtCard key={doubt.id} doubt={doubt} onCleared={handleMarkCleared} />
                 ))}
             </div>
         )
