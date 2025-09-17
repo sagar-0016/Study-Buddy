@@ -157,21 +157,20 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
-                    <div className="space-y-1.5 text-sm text-muted-foreground">
-                        <span>Conversation about your doubt in {doubt.subject}.</span>
-                         {doubt.lectureTitle && (
-                           <div className="flex items-center gap-2">
-                               <span>From lecture:</span>
-                               <Badge variant="outline">{doubt.lectureTitle}</Badge>
-                           </div>
+                    <DialogDescription>
+                         Conversation about your doubt in {doubt.subject}.
+                        {doubt.lectureTitle && (
+                           <span className="block mt-1">
+                               From lecture: <Badge variant="outline">{doubt.lectureTitle}</Badge>
+                           </span>
                         )}
-                    </div>
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
                         thread.map(message => (
-                             <div key={message.id} className={cn("flex items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
+                             <div key={message.id} className={cn("flex w-full items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
                                 {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
                                 <div className={cn("relative p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
                                     <p className="whitespace-pre-wrap">{message.text}</p>
