@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -154,6 +153,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
+    const { pauseLocking } = useAuth();
 
     const fetchThread = useCallback(async () => {
         setIsLoading(true);
@@ -194,6 +194,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     
     const handleLinkClick = (message: DoubtMessage) => {
         if (!message.mediaUrl) return;
+        pauseLocking(15000); // Pause for 15 seconds
         setViewingUrl(message.mediaUrl);
     }
 
@@ -412,5 +413,7 @@ export default function DoubtCentre() {
         </div>
     );
 }
+
+    
 
     
