@@ -167,7 +167,15 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
                         thread.map(message => (
                             <div key={message.id} className={cn("flex gap-3 text-sm", message.sender === 'user' ? "justify-start" : "justify-end")}>
-                                {message.sender === 'user' ? <User className="h-6 w-6 text-muted-foreground flex-shrink-0" /> : null}
+                                {message.sender === 'user' ? (
+                                     <Image
+                                        src="/avatar.png"
+                                        width={24}
+                                        height={24}
+                                        alt="User Avatar"
+                                        className="rounded-full flex-shrink-0"
+                                    />
+                                ) : null}
                                 <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-muted" : "bg-primary/10")}>
                                     <p className="whitespace-pre-wrap">{message.text}</p>
                                     {message.mediaUrl && (
