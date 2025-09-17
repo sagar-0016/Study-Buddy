@@ -14,6 +14,7 @@ import {
   where,
   QueryConstraint,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Doubt, AccessLevel, DoubtMessage } from './types';
@@ -51,7 +52,7 @@ export const addDoubt = async (data: {
 
     // 1. Create the main doubt document
     const doubtRef = doc(collection(db, 'doubts'));
-    const doubtPayload: Omit<Doubt, 'id' | 'thread' | 'lastMessage'> = {
+    const doubtPayload: Omit<Doubt, 'id' | 'thread' | 'lastReply'> = {
         text: data.text,
         subject: data.subject,
         accessLevel: data.accessLevel,
@@ -77,10 +78,10 @@ export const addDoubt = async (data: {
     }
     batch.set(threadRef, messagePayload);
 
-    // 3. Update the main doubt doc with the last message info
+    // 3. Update the main doubt doc with the last reply info
     batch.update(doubtRef, {
-        'lastMessage.text': data.text,
-        'lastMessage.timestamp': now,
+        'lastReply.text': data.text,
+        'lastReply.timestamp': now,
     });
     
     await batch.commit();
@@ -104,8 +105,8 @@ export const addReplyToDoubt = async (doubtId: string, messageData: { text: stri
     });
     
     await updateDoc(doubtRef, {
-        'lastMessage.text': messageData.text,
-        'lastMessage.timestamp': now,
+        'lastReply.text': messageData.text,
+        'lastReply.timestamp': now,
     });
 
     return newDocRef.id;
@@ -114,12 +115,12 @@ export const addReplyToDoubt = async (doubtId: string, messageData: { text: stri
 /**
  * Fetches all relevant doubts based on user's access level.
  * @param {AccessLevel} accessLevel - The access level of the current user.
- * @returns {Promise<Doubt[]>} An array of doubt objects, sorted by the last message time.
+ * @returns {Promise<Doubt[]>} An array of doubt objects, sorted by creation time.
  */
 export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
   try {
     const doubtsRef = collection(db, 'doubts');
-    const constraints: QueryConstraint[] = [orderBy('lastMessage.timestamp', 'desc')];
+    const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
     
     if (accessLevel === 'limited') {
       constraints.push(where('accessLevel', '==', 'limited'));

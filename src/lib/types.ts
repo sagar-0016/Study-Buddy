@@ -1,5 +1,4 @@
 
-
 import { DocumentData, Timestamp } from 'firebase/firestore';
 export type AccessLevel = 'full' | 'limited';
 
@@ -176,7 +175,7 @@ export interface Doubt extends DocumentData {
     createdAt: Timestamp;
     accessLevel: AccessLevel;
     thread?: DoubtMessage[]; // For client-side state
-    lastMessage?: {
+    lastReply?: {
         text: string;
         timestamp: Timestamp;
     }
