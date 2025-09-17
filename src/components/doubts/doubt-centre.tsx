@@ -20,7 +20,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
-import FloatingBrowser from '../shared/floating-browser';
+import DoubtFloatingBrowser from './doubt-floating-browser';
 
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
@@ -153,7 +153,6 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
-    const { pauseLocking } = useAuth();
 
     const fetchThread = useCallback(async () => {
         setIsLoading(true);
@@ -194,7 +193,6 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     
     const handleLinkClick = (message: DoubtMessage) => {
         if (!message.mediaUrl) return;
-        pauseLocking(15000); // Pause for 15 seconds
         setViewingUrl(message.mediaUrl);
     }
 
@@ -301,7 +299,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                         </Button>
                     </DialogFooter>
                 )}
-                 {viewingUrl && <FloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
+                 {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
             </DialogContent>
         </Dialog>
     );
@@ -413,7 +411,3 @@ export default function DoubtCentre() {
         </div>
     );
 }
-
-    
-
-    
