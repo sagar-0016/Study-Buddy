@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect, MouseEvent as ReactMouseEvent } from 'react';
@@ -84,6 +85,7 @@ const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDiv
                 width: `${size.width}px`,
                 height: `${size.height}px`,
             }}
+            onClick={(e) => e.stopPropagation()} // Prevent clicks from closing the modal
         >
             <div onMouseDown={handleDragStart} className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg">
                 <div className="flex items-center gap-1">
@@ -123,7 +125,6 @@ export default function DoubtFloatingBrowser({ url, onClose }: DoubtFloatingBrow
         setIsLoading(false);
     };
     
-    // Some sites block embedding. We can't detect this perfectly, but we can use a timeout.
     useEffect(() => {
         const timer = setTimeout(() => {
             if (isLoading) {
@@ -134,7 +135,7 @@ export default function DoubtFloatingBrowser({ url, onClose }: DoubtFloatingBrow
                     duration: 8000,
                 });
             }
-        }, 5000); // 5 second timeout
+        }, 5000);
 
         return () => clearTimeout(timer);
     }, [isLoading, toast]);
