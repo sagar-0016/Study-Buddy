@@ -160,10 +160,10 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                     <div className="space-y-1.5 text-sm text-muted-foreground">
                         <p>Conversation about your doubt in {doubt.subject}.</p>
                         {doubt.lectureTitle && (
-                            <div className="flex items-center gap-2">
-                                <span>From lecture:</span>
-                                <Badge variant="outline">{doubt.lectureTitle}</Badge>
-                            </div>
+                           <div className="flex items-center gap-2">
+                               <span>From lecture:</span>
+                               <Badge variant="outline">{doubt.lectureTitle}</Badge>
+                           </div>
                         )}
                     </div>
                 </DialogHeader>
@@ -171,17 +171,9 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
                         thread.map(message => (
-                            <div key={message.id} className={cn("flex gap-3 text-sm", message.sender === 'user' ? "justify-start" : "justify-end")}>
-                                {message.sender === 'user' ? (
-                                     <Image
-                                        src="/avatar.png"
-                                        width={24}
-                                        height={24}
-                                        alt="User Avatar"
-                                        className="rounded-full object-cover flex-shrink-0"
-                                    />
-                                ) : null}
-                                <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-muted" : "bg-primary/10")}>
+                            <div key={message.id} className={cn("flex items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
+                                {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
+                                <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
                                     <p className="whitespace-pre-wrap">{message.text}</p>
                                     {message.mediaUrl && (
                                         <Dialog>
@@ -195,7 +187,17 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                                     )}
                                     <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
                                 </div>
-                                {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
+                                {message.sender === 'user' ? (
+                                    <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                                        <Image
+                                            src="/avatar.png"
+                                            width={24}
+                                            height={24}
+                                            alt="User Avatar"
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                ) : null}
                             </div>
                         ))
                     )}
