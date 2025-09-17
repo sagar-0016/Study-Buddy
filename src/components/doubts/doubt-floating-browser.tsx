@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { X, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '../ui/skeleton';
 
 interface DraggableResizableDivProps {
   children: React.ReactNode;
@@ -16,7 +15,6 @@ interface DraggableResizableDivProps {
 
 const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDivProps) => {
     const [position, setPosition] = useState(() => {
-        // Calculate the center position on initial render
         if (typeof window !== 'undefined') {
             const width = 800;
             const height = 600;
@@ -26,7 +24,6 @@ const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDiv
         }
         return { x: 50, y: 50 };
     });
-
     const [size, setSize] = useState({ width: 800, height: 600 });
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
@@ -95,16 +92,15 @@ const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDiv
                 width: `${size.width}px`,
                 height: `${size.height}px`,
             }}
+            onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing the window
         >
             <div onMouseDown={handleDragStart} className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg">
-                <div className="flex items-center gap-1">
-                     <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                        <a href={url} target="_blank" rel="noopener noreferrer" onMouseDown={(e) => e.stopPropagation()}>
-                            <ExternalLink className="h-4 w-4" />
-                             <span className="sr-only">Open in new tab</span>
-                        </a>
-                    </Button>
-                </div>
+                <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+                    <a href={url} target="_blank" rel="noopener noreferrer" onMouseDown={(e) => e.stopPropagation()}>
+                        <ExternalLink className="h-4 w-4" />
+                        <span className="sr-only">Open in new tab</span>
+                    </a>
+                </Button>
                 <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" onClick={onClose}>
                     <X className="h-4 w-4" />
                 </Button>
@@ -114,7 +110,7 @@ const DraggableResizableDiv = ({ children, onClose, url }: DraggableResizableDiv
             </div>
             <div
                 onMouseDown={handleResizeStart}
-                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10"
+                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
             />
         </div>
     );
