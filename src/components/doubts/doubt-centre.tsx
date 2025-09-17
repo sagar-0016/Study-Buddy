@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, User, ShieldCheck, MessageCircle as MessageCircleIcon } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -157,10 +157,15 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
-                    <DialogDescription>
-                        Conversation about your doubt in {doubt.subject}.
-                         {doubt.lectureTitle && <span className='block mt-1'>From lecture: <Badge variant="outline">{doubt.lectureTitle}</Badge></span>}
-                    </DialogDescription>
+                    <div className="space-y-1.5 text-sm text-muted-foreground">
+                        <p>Conversation about your doubt in {doubt.subject}.</p>
+                        {doubt.lectureTitle && (
+                            <div className="flex items-center gap-2">
+                                <span>From lecture:</span>
+                                <Badge variant="outline">{doubt.lectureTitle}</Badge>
+                            </div>
+                        )}
+                    </div>
                 </DialogHeader>
 
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
