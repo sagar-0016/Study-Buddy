@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -21,7 +21,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
-import DoubtFloatingBrowser from './doubt-floating-browser';
 
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
@@ -151,7 +150,6 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const [replyText, setReplyText] = useState('');
     const [linkUrl, setLinkUrl] = useState('');
     const [isReplying, setIsReplying] = useState(false);
-    const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -192,9 +190,8 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
         }
     };
     
-    const handleLinkClick = (message: DoubtMessage) => {
-        if (!message.mediaUrl) return;
-        setViewingUrl(message.mediaUrl);
+    const handleLinkClick = (url: string) => {
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
 
     const MessageBubble = ({ message }: { message: DoubtMessage }) => {
@@ -208,9 +205,9 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                  
                 <div className={cn("p-3 rounded-lg relative max-w-sm", isUser ? "bg-primary/10" : "bg-muted")}>
                     {isLink && message.mediaUrl ? (
-                        <button onClick={() => handleLinkClick(message)} className="flex items-center gap-2 text-left hover:underline">
-                            <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                        <button onClick={() => handleLinkClick(message.mediaUrl!)} className="flex items-center gap-2 text-left hover:underline text-blue-600 dark:text-blue-400">
                             <span className="font-medium">{message.text}</span>
+                             <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         </button>
                     ) : (
                         <p className="whitespace-pre-wrap">{message.text}</p>
@@ -300,7 +297,6 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                         </Button>
                     </DialogFooter>
                 )}
-                 {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
             </DialogContent>
         </Dialog>
     );
