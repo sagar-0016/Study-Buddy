@@ -116,7 +116,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     );
 };
 
-const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt: Doubt, onCleared: (doubtId: string) => void, children: React.ReactNode, onOpenChange: (open: boolean) => void }) => {
+const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, children: React.ReactNode, onOpenChange: (open: boolean) => void }) => {
     const [thread, setThread] = useState<DoubtMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
@@ -126,14 +126,17 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
 
     const fetchThread = useCallback(async () => {
         setIsLoading(true);
-        const fetchedThread = await getDoubtThread(doubt.id);
+        const fetchedThread = await getDoubtThread(doubt.id, doubt.lectureId);
         setThread(fetchedThread);
         setIsLoading(false);
-    }, [doubt.id]);
+    }, [doubt.id, doubt.lectureId]);
 
     useEffect(() => {
-        fetchThread();
-    }, [fetchThread]);
+        if (onOpenChange) { // Assuming onOpenChange(true) means dialog opened
+             fetchThread();
+        }
+    }, [fetchThread, onOpenChange]);
+
 
     useEffect(() => {
         endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,7 +146,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
         if (!replyText) return;
         setIsReplying(true);
         try {
-            await addReplyToDoubt(doubt.id, { text: replyText, sender: 'user' });
+            await addReplyToDoubt(doubt.id, doubt.lectureId, { text: replyText, sender: 'user' });
             setReplyText('');
             await fetchThread(); // Re-fetch the thread
         } catch (error) {
@@ -154,7 +157,10 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
     };
     
     return (
-        <Dialog onOpenChange={onOpenChange}>
+        <Dialog onOpenChange={(open) => {
+            onOpenChange(open);
+            if(open) fetchThread();
+        }}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 <DialogHeader>
@@ -182,7 +188,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
                                             <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
                                         </Dialog>
                                     )}
-                                    <p className="text-xs text-muted-foreground/80 mt-2 text-right">{formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true })}</p>
+                                    <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
                                 </div>
                                 {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
                             </div>
@@ -205,7 +211,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
 
                 {doubt.isAddressed && !doubt.isCleared && (
                     <DialogFooter className='border-t pt-4'>
-                        <Button onClick={() => onCleared(doubt.id)}>
+                        <Button onClick={() => onCleared(doubt.id, doubt.lectureId)}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Mark as Cleared
                         </Button>
@@ -216,7 +222,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children, onOpenChange }: { doubt
     );
 };
 
-const DoubtCard = ({ doubt, onCleared, onThreadOpened }: { doubt: Doubt, onCleared: (doubtId: string) => void, onThreadOpened: () => void }) => {
+const DoubtCard = ({ doubt, onCleared, onThreadOpened }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, onThreadOpened: () => void }) => {
     const getStatus = () => {
         if (doubt.isCleared) return { text: 'Cleared by you', icon: CheckCircle, color: 'text-green-600' };
         if (doubt.isAddressed) return { text: 'Admin Replied', icon: AlertCircle, color: 'text-yellow-600' };
@@ -233,7 +239,7 @@ const DoubtCard = ({ doubt, onCleared, onThreadOpened }: { doubt: Doubt, onClear
                         <div className='space-y-1.5'>
                             <p className='font-semibold line-clamp-2'>{doubt.text}</p>
                             <CardDescription>
-                                {doubt.lastReply?.timestamp ? formatDistanceToNow(doubt.lastReply.timestamp.toDate(), { addSuffix: true }) : formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true })}
+                                {doubt.lastReply?.timestamp ? `Last reply ${formatDistanceToNow(doubt.lastReply.timestamp.toDate(), { addSuffix: true })}` : `Created ${formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true })}`}
                             </CardDescription>
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
@@ -269,9 +275,9 @@ export default function DoubtCentre() {
         fetchDoubts();
     }, [fetchDoubts]);
     
-    const handleMarkCleared = async (doubtId: string) => {
+    const handleMarkCleared = async (doubtId: string, lectureId?: string) => {
         try {
-            await markDoubtAsCleared(doubtId);
+            await markDoubtAsCleared(doubtId, lectureId);
             fetchDoubts(); // Re-fetch all doubts to ensure UI is consistent
             toast({ title: 'Success', description: 'Doubt thread marked as cleared.' });
         } catch(error) {

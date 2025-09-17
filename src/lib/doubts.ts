@@ -15,6 +15,7 @@ import {
   QueryConstraint,
   writeBatch,
   Timestamp,
+  getDoc,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Doubt, AccessLevel, DoubtMessage } from './types';
@@ -96,15 +97,13 @@ export const addDoubt = async (data: {
 /**
  * Adds a reply message to a doubt's thread.
  * @param {string} doubtId - The ID of the doubt document.
+ * @param {string | undefined} lectureId - The ID of the lecture if it's a nested doubt.
  * @param {Omit<DoubtMessage, 'id' | 'createdAt'>} messageData - The message data.
  * @returns {Promise<string>} The ID of the new message document.
  */
-export const addReplyToDoubt = async (doubtId: string, messageData: { text: string; sender: 'user' | 'admin' }): Promise<string> => {
-    // This function needs the full path to the doubt, which we don't have here.
-    // This logic is now handled inside the DoubtThreadDialog which has the full doubt object.
-    // For now, this function is simplified and may need to be removed or adapted if used elsewhere.
-    console.warn("addReplyToDoubt is simplified and assumes a top-level doubt. Refactor if needed for lecture doubts.");
-    const doubtRef = doc(db, 'doubts', doubtId);
+export const addReplyToDoubt = async (doubtId: string, lectureId: string | undefined, messageData: { text: string; sender: 'user' | 'admin' }): Promise<string> => {
+    const doubtPath = lectureId ? `lectures/${lectureId}/doubts/${doubtId}` : `doubts/${doubtId}`;
+    const doubtRef = doc(db, doubtPath);
     const threadRef = collection(doubtRef, 'thread');
     const now = serverTimestamp();
     
@@ -151,29 +150,19 @@ export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
 /**
  * Fetches all messages for a specific doubt thread.
  * @param {string} doubtId - The ID of the doubt.
+ * @param {string} [lectureId] - The lecture ID if it's a nested doubt.
  * @returns {Promise<DoubtMessage[]>} An array of message objects.
  */
-export const getDoubtThread = async (doubtId: string): Promise<DoubtMessage[]> => {
+export const getDoubtThread = async (doubtId: string, lectureId?: string): Promise<DoubtMessage[]> => {
     try {
-        const threadRef = collection(db, 'doubts', doubtId, 'thread');
+        const doubtPath = lectureId ? `lectures/${lectureId}/doubts/${doubtId}` : `doubts/${doubtId}`;
+        const threadRef = collection(db, doubtPath, 'thread');
         const q = query(threadRef, orderBy('createdAt', 'asc'));
         const querySnapshot = await getDocs(q);
 
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DoubtMessage));
     } catch (error) {
         console.error(`Error fetching thread for doubt ${doubtId}:`, error);
-        // Fallback for lecture doubts
-         try {
-            const lectureDoubtsQuery = query(collectionGroup(db, 'doubts'), where('__name__', '==', `lectures/${(error as any).resource?.segments?.[1]}/doubts/${doubtId}`));
-            const lectureDoubtSnapshot = await getDocs(lectureDoubtsQuery);
-            if (!lectureDoubtSnapshot.empty) {
-                const docRef = lectureDoubtSnapshot.docs[0].ref;
-                const threadSnapshot = await getDocs(query(collection(docRef, 'thread'), orderBy('createdAt', 'asc')));
-                return threadSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as DoubtMessage);
-            }
-        } catch (fallbackError) {
-             console.error(`Fallback fetch also failed for doubt ${doubtId}:`, fallbackError);
-        }
         return [];
     }
 };
@@ -186,17 +175,22 @@ export const getDoubtThread = async (doubtId: string): Promise<DoubtMessage[]> =
  */
 export const markDoubtAsCleared = async (doubtId: string, lectureId?: string): Promise<void> => {
     try {
-        const doubtRef = lectureId 
-            ? doc(db, 'lectures', lectureId, 'doubts', doubtId)
-            : doc(db, 'doubts', doubtId);
+        const doubtPath = lectureId 
+            ? `lectures/${lectureId}/doubts/${doubtId}`
+            : `doubts/${doubtId}`;
+        const doubtRef = doc(db, doubtPath);
             
-        await updateDoc(doubtRef, {
-            isCleared: true,
-        });
+        // First check if the document exists to avoid unnecessary errors
+        const docSnap = await getDoc(doubtRef);
+        if (docSnap.exists()) {
+             await updateDoc(doubtRef, {
+                isCleared: true,
+            });
+        } else {
+            console.warn(`Attempted to mark non-existent doubt as cleared: ${doubtPath}`);
+        }
     } catch (error) {
         console.error(`Error marking doubt ${doubtId} as cleared:`, error);
         throw error;
     }
 }
-
-    
