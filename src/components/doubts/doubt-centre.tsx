@@ -157,10 +157,12 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
-                     <div className="text-sm text-muted-foreground">
-                        Conversation about your doubt in {doubt.subject}.
+                     <div>
+                        <span className="text-sm text-muted-foreground">
+                            Conversation about your doubt in {doubt.subject}.
+                        </span>
                         {doubt.lectureTitle && (
-                           <span className="block mt-1">
+                           <span className="block mt-1 text-sm text-muted-foreground">
                                From lecture: <Badge variant="outline">{doubt.lectureTitle}</Badge>
                            </span>
                         )}
@@ -172,22 +174,23 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                         thread.map(message => (
                              <div key={message.id} className={cn("flex w-full items-end gap-3 text-sm", message.sender === 'user' ? "justify-end" : "justify-start")}>
                                 {message.sender === 'admin' ? <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" /> : null}
-                                <div className={cn("relative p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
-                                    <p className="whitespace-pre-wrap">{message.text}</p>
-                                    {message.mediaUrl && (
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full group relative">
-                                                    <Image src={message.mediaUrl} alt="Doubt media" width={300} height={200} className="object-cover w-full" />
-                                                </button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
-                                        </Dialog>
-                                    )}
-                                    <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
-                                
-                                     {message.sender === 'user' && (
-                                        <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full overflow-hidden flex-shrink-0 -mr-8 -mb-1 border-2 border-background">
+                                <div className="relative">
+                                    <div className={cn("p-3 rounded-lg", message.sender === 'user' ? "bg-primary/10" : "bg-muted")}>
+                                        <p className="whitespace-pre-wrap">{message.text}</p>
+                                        {message.mediaUrl && (
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full group relative">
+                                                        <Image src={message.mediaUrl} alt="Doubt media" width={300} height={200} className="object-cover w-full" />
+                                                    </button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
+                                            </Dialog>
+                                        )}
+                                        <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
+                                    </div>
+                                    {message.sender === 'user' && (
+                                        <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full overflow-hidden flex-shrink-0 -mr-8 -mb-1 border-2 border-background">
                                             <Image
                                                 src="/avatar.png"
                                                 width={24}
