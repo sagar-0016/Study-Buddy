@@ -178,7 +178,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                                         width={24}
                                         height={24}
                                         alt="User Avatar"
-                                        className="rounded-full flex-shrink-0"
+                                        className="rounded-full object-cover flex-shrink-0"
                                     />
                                 ) : null}
                                 <div className={cn("p-3 rounded-lg max-w-sm", message.sender === 'user' ? "bg-muted" : "bg-primary/10")}>
