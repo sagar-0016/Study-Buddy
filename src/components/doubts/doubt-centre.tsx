@@ -21,7 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
-
+import DoubtFloatingBrowser from './doubt-floating-browser';
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
     const [text, setText] = useState('');
@@ -30,7 +30,6 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     const [isSaving, setIsSaving] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
-    const { pauseLocking } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const canSubmit = useMemo(() => text && subject, [text, subject]);
@@ -42,12 +41,6 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     };
 
     const triggerFileInput = () => {
-        toast({
-            title: "File Upload",
-            description: "The app will lock in 10 seconds. Please select your file.",
-            duration: 10000,
-        });
-        pauseLocking(10000); // Pause for 10 seconds
         fileInputRef.current?.click();
     }
 
@@ -150,6 +143,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     const [replyText, setReplyText] = useState('');
     const [linkUrl, setLinkUrl] = useState('');
     const [isReplying, setIsReplying] = useState(false);
+    const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -191,7 +185,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     };
     
     const handleLinkClick = (url: string) => {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        setViewingUrl(url);
     }
 
     const MessageBubble = ({ message }: { message: DoubtMessage }) => {
@@ -236,69 +230,70 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     }
 
     return (
-        <Dialog onOpenChange={(open) => {
-            if (open) fetchThread();
-        }}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
-                <DialogHeader>
-                    <DialogTitle>{doubt.text}</DialogTitle>
-                    <div>
-                        <span className="text-sm text-muted-foreground">
-                            Conversation about your doubt in {doubt.subject}.
-                        </span>
-                        {doubt.lectureTitle && (
-                           <span className="block mt-1">
-                                <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
-                           </span>
+        <>
+            {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
+            <Dialog onOpenChange={(open) => { if (open) fetchThread(); }}>
+                <DialogTrigger asChild>{children}</DialogTrigger>
+                <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
+                    <DialogHeader>
+                        <DialogTitle>{doubt.text}</DialogTitle>
+                        <div>
+                            <span className="text-sm text-muted-foreground">
+                                Conversation about your doubt in {doubt.subject}.
+                            </span>
+                            {doubt.lectureTitle && (
+                            <span className="block mt-1">
+                                    <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
+                            </span>
+                            )}
+                        </div>
+                    </DialogHeader>
+
+                    <div className="flex-grow overflow-y-auto pr-4 space-y-4">
+                        {isLoading ? <Skeleton className="h-20 w-full" /> : (
+                            thread.map(message => (
+                                <MessageBubble key={message.id} message={message} />
+                            ))
                         )}
+                        <div ref={endOfMessagesRef} />
                     </div>
-                </DialogHeader>
-
-                <div className="flex-grow overflow-y-auto pr-4 space-y-4">
-                    {isLoading ? <Skeleton className="h-20 w-full" /> : (
-                        thread.map(message => (
-                            <MessageBubble key={message.id} message={message} />
-                        ))
-                    )}
-                    <div ref={endOfMessagesRef} />
-                </div>
-                
-                <Separator />
-                
-                 <div className="relative">
-                    <Textarea 
-                        id={`reply-${doubt.id}`} 
-                        value={replyText} 
-                        onChange={(e) => setReplyText(e.target.value)} 
-                        placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
-                        rows={1}
-                        className="pr-24 resize-none"
-                        disabled={isReplying || doubt.isCleared} 
-                    />
-                    <AddLinkDialog onLinkAdd={setLinkUrl} />
-                    <Button 
-                        onClick={handleReply} 
-                        disabled={!replyText || isReplying || doubt.isCleared} 
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                    >
-                        {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
-                        <span className="sr-only">Send Reply</span>
-                    </Button>
-                </div>
-
-
-                {doubt.isAddressed && !doubt.isCleared && (
-                    <DialogFooter className='border-t pt-4'>
-                        <Button onClick={() => onCleared(doubt.id, doubt.lectureId)}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Mark as Cleared
+                    
+                    <Separator />
+                    
+                    <div className="relative">
+                        <Textarea 
+                            id={`reply-${doubt.id}`} 
+                            value={replyText} 
+                            onChange={(e) => setReplyText(e.target.value)} 
+                            placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
+                            rows={1}
+                            className="pr-24 resize-none"
+                            disabled={isReplying || doubt.isCleared} 
+                        />
+                        <AddLinkDialog onLinkAdd={setLinkUrl} />
+                        <Button 
+                            onClick={handleReply} 
+                            disabled={!replyText || isReplying || doubt.isCleared} 
+                            size="icon"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                        >
+                            {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
+                            <span className="sr-only">Send Reply</span>
                         </Button>
-                    </DialogFooter>
-                )}
-            </DialogContent>
-        </Dialog>
+                    </div>
+
+
+                    {doubt.isAddressed && !doubt.isCleared && (
+                        <DialogFooter className='border-t pt-4'>
+                            <Button onClick={() => onCleared(doubt.id, doubt.lectureId)}>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Mark as Cleared
+                            </Button>
+                        </DialogFooter>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </>
     );
 };
 

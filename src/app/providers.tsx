@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -46,27 +46,36 @@ function AppBackground() {
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLocked, lockApp, unlockApp, isReloading } = useAuth();
   const { isClassMode } = useClassMode();
+  const lockPauseTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const lock = () => {
-      if (isAuthenticated && !isLocked) {
-        lockApp();
-      }
+    const handleBlur = () => {
+      // Add a small timeout to allow the activeElement to be updated
+      setTimeout(() => {
+        // Check if the focus has moved to an iframe within our app
+        if (document.activeElement?.tagName === 'IFRAME') {
+          // You could add more specific checks here if needed, e.g.,
+          // by adding a data-attribute to your floating browser's iframe
+          return;
+        }
+
+        if (isAuthenticated && !isLocked) {
+          lockApp();
+        }
+      }, 0);
     };
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        lock();
+        lockApp();
       }
     };
 
-    // For app/desktop/window switching
-    window.addEventListener('blur', lock);
-    // For tab switching
+    window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('blur', lock);
+      window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isAuthenticated, isLocked, lockApp]);
