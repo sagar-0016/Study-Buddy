@@ -143,7 +143,11 @@ const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
 }
 
 const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void }) => {
-    const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉'];
+    const emojis = [
+        '👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉',
+        '🤔', '💡', '💯', '🙌', '✅', '❌', '👀', '🤯'
+    ];
+
 
     return (
         <Popover>
@@ -154,7 +158,7 @@ const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-2">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1">
                     {emojis.map(emoji => (
                         <Button
                             key={emoji}
@@ -311,14 +315,16 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                     </div>
                 </DialogHeader>
 
-                {!isAdmin && doubt.isAddressed && !doubt.isCleared && (
-                    <div className="flex justify-end pr-6">
-                        <Button onClick={handleMarkCleared} variant="outline" size="sm">
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Mark as Cleared
-                        </Button>
-                    </div>
-                )}
+                <div className="pr-6 pt-2">
+                    {!isAdmin && doubt.isAddressed && !doubt.isCleared && (
+                        <div className="flex justify-end">
+                            <Button onClick={handleMarkCleared} variant="outline" size="sm">
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Mark as Cleared
+                            </Button>
+                        </div>
+                    )}
+                </div>
 
                 <div className="flex-grow overflow-y-auto pr-4 space-y-4">
                     {isLoading ? <Skeleton className="h-20 w-full" /> : (
@@ -341,7 +347,7 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                         className="pr-28 resize-none"
                         disabled={isReplying || doubt.isCleared} 
                     />
-                    <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center">
+                    <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center gap-1">
                         <EmojiPicker onEmojiSelect={(emoji) => setReplyText(replyText + emoji)} />
                         <AddLinkDialog onLinkAdd={setLinkUrl} />
                     </div>
