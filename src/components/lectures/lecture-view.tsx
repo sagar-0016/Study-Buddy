@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useClassMode } from '@/context/class-mode-context';
 import { cn } from '@/lib/utils';
@@ -214,14 +215,10 @@ const NotesSection = ({ lecture, isClassMode, onNoteClick }: { lecture: Lecture,
     }
     
     const handleDeleteNote = async (noteId: string) => {
-        if (!window.confirm("Are you sure you want to delete this note? This cannot be undone.")) {
-            return;
-        }
-
         try {
             await deleteLectureNote(lecture.id, noteId);
             toast({ title: "Note Deleted", description: "The note has been removed successfully." });
-            fetchNotes();
+            fetchNotes(); // Refresh the list
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete the note.", variant: "destructive" });
         }
@@ -240,9 +237,27 @@ const NotesSection = ({ lecture, isClassMode, onNoteClick }: { lecture: Lecture,
                     <span className="font-medium text-sm truncate">{note.name}</span>
                 </button>
                 {!isClassMode && isUserUploaded && (
-                     <Button variant="ghost" size="icon" className="flex-shrink-0" onClick={() => handleDeleteNote(note.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="flex-shrink-0">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the note from the lecture.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteNote(note.id)}>
+                                    Continue
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 )}
             </div>
         );
