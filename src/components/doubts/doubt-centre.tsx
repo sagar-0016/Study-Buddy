@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle, Smile } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle, Smile, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -27,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
     const [text, setText] = useState('');
@@ -116,9 +117,16 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
 
 const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
     const [linkUrl, setLinkUrl] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleAdd = () => {
+        onLinkAdd(linkUrl);
+        setLinkUrl('');
+        setIsOpen(false);
+    }
 
     return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                     <LinkIcon className="h-4 w-4" />
@@ -135,19 +143,26 @@ const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
                     <Input id="link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://example.com" />
                 </div>
                 <DialogFooter>
-                    <Button onClick={() => { onLinkAdd(linkUrl); (document.querySelector('[data-radix-dialog-close]') as HTMLElement)?.click(); }}>Add Link</Button>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAdd}>Add Link</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     )
 }
 
-const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void }) => {
-    const emojis = [
-        '👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉',
-        '🤔', '💡', '💯', '🙌', '✅', '❌', '👀', '🤯'
-    ];
+const emojiList: { emoji: string, keywords: string[] }[] = [
+    { emoji: '😀', keywords: ['grin', 'happy', 'smile'] }, { emoji: '😃', keywords: ['smiley', 'happy', 'big eyes'] }, { emoji: '😄', keywords: ['smile', 'happy', 'eyes closed'] }, { emoji: '😁', keywords: ['grinning', 'beaming', 'smile'] }, { emoji: '😆', keywords: ['laughing', 'happy', 'lol'] }, { emoji: '😅', keywords: ['sweat', 'smile', 'nervous'] }, { emoji: '😂', keywords: ['joy', 'laugh', 'cry'] }, { emoji: '🤣', keywords: ['rofl', 'rolling', 'laughing'] }, { emoji: '😭', keywords: ['crying', 'sad', 'sob'] }, { emoji: '😉', keywords: ['wink', 'flirt'] }, { emoji: '😗', keywords: ['kissing', 'pucker'] }, { emoji: '😙', keywords: ['kissing', 'smile'] }, { emoji: '😚', keywords: ['kissing', 'closed eyes'] }, { emoji: '😘', keywords: ['kiss', 'heart'] }, { emoji: '🥰', keywords: ['love', 'hearts', 'blush'] }, { emoji: '😍', keywords: ['heart eyes', 'love'] }, { emoji: '🤩', keywords: ['star-struck', 'excited'] }, { emoji: '🥳', keywords: ['party', 'celebrate'] }, { emoji: '🫠', keywords: ['melting', 'hot', 'overwhelmed'] }, { emoji: '🙃', keywords: ['upside-down', 'silly'] }, { emoji: '🙂', keywords: ['smile', 'slight'] }, { emoji: '🥲', keywords: ['smiling face with tear', 'happy cry'] }, { emoji: '🥹', keywords: ['holding back tears', 'sad', 'proud'] }, { emoji: '😊', keywords: ['blush', 'happy'] }, { emoji: '☺️', keywords: ['relaxed', 'blush'] }, { emoji: '😌', keywords: ['relieved', 'calm'] }, { emoji: '🙂‍↕️', keywords: ['shaking head yes', 'agree'] }, { emoji: '🙂‍↔️', keywords: ['shaking head no', 'disagree'] }, { emoji: '😏', keywords: ['smirk', 'smug'] }, { emoji: '🤤', keywords: ['drooling', 'hungry'] }, { emoji: '😋', keywords: ['yum', 'tasty'] }, { emoji: '😛', keywords: ['tongue out', 'playful'] }, { emoji: '😝', keywords: ['tongue out', 'silly'] }, { emoji: '😜', keywords: ['wink tongue', 'playful'] }, { emoji: '🤪', keywords: ['zany', 'crazy'] }, { emoji: '🥴', keywords: ['woozy', 'drunk'] }, { emoji: '😔', keywords: ['pensive', 'sad'] }, { emoji: '🥺', keywords: ['pleading', 'puppy eyes'] }, { emoji: '😬', keywords: ['grimacing', 'nervous'] }, { emoji: '😑', keywords: ['expressionless', 'meh'] }, { emoji: '😐', keywords: ['neutral', 'blank'] }, { emoji: '😶', keywords: ['no mouth', 'silent'] }, { emoji: '😶‍🌫️', keywords: ['face in clouds', 'absent'] }, { emoji: '🫥', keywords: ['dotted line', 'hidden'] }, { emoji: '🤐', keywords: ['zipper mouth', 'secret'] }, { emoji: '🫡', keywords: ['saluting', 'respect'] }, { emoji: '🤔', keywords: ['thinking', 'hmmm'] }, { emoji: '🤫', keywords: ['shushing', 'quiet'] }, { emoji: '🫢', keywords: ['hand over mouth', 'shock'] }, { emoji: '🤭', keywords: ['giggle', 'hand over mouth'] }, { emoji: '🥱', keywords: ['yawning', 'tired'] }, { emoji: '🤗', keywords: ['hugging', 'hug'] }, { emoji: '🫣', keywords: ['peeking', 'scared'] }, { emoji: '😱', keywords: ['scream', 'shock'] }, { emoji: '🤨', keywords: ['raised eyebrow', 'suspicious'] }, { emoji: '🧐', keywords: ['monocle', 'inspect'] }, { emoji: '😒', keywords: ['unamused', 'annoyed'] }, { emoji: '🙄', keywords: ['rolling eyes', 'annoyed'] }, { emoji: '😮‍💨', keywords: ['exhaling', 'sigh'] }, { emoji: '😤', keywords: ['steam nose', 'angry'] }, { emoji: '😠', keywords: ['angry', 'mad'] }, { emoji: '😡', keywords: ['pouting', 'furious'] }, { emoji: '🤬', keywords: ['swearing', 'cursing'] }, { emoji: '😞', keywords: ['disappointed', 'sad'] }, { emoji: '😓', keywords: ['cold sweat', 'anxious'] }, { emoji: '😟', keywords: ['worried', 'concerned'] }, { emoji: '😥', keywords: ['sad but relieved', 'sweat'] }, { emoji: '😢', keywords: ['crying', 'sad'] }, { emoji: '☹️', keywords: ['frowning', 'sad'] }, { emoji: '🙁', keywords: ['slightly frowning', 'sad'] }, { emoji: '🫤', keywords: ['wavy mouth', 'uncertain'] }, { emoji: '😕', keywords: ['confused', 'uncertain'] }, { emoji: '😰', keywords: ['anxious', 'blue'] }, { emoji: '😨', keywords: ['fearful', 'scared'] }, { emoji: '😧', keywords: ['anguished', 'pain'] }, { emoji: '😦', keywords: ['frowning open mouth', 'surprise'] }, { emoji: '😮', keywords: ['open mouth', 'surprise'] }, { emoji: '😯', keywords: ['hushed', 'silent'] }, { emoji: '😲', keywords: ['astonished', 'shocked'] }, { emoji: '😳', keywords: ['flushed', 'embarrassed'] }, { emoji: '🤯', keywords: ['exploding head', 'mind blown'] }, { emoji: '😖', keywords: ['confounded', 'struggling'] }, { emoji: '😣', keywords: ['persevering', 'struggling'] }, { emoji: '😩', keywords: ['weary', 'tired'] }, { emoji: '😫', keywords: ['tired', 'frustrated'] }, { emoji: '😵', keywords: ['dizzy', 'knocked out'] }, { emoji: '😵‍💫', keywords: ['spiral eyes', 'dizzy'] }, { emoji: '🫨', keywords: ['shaking face', 'shock'] }, { emoji: '🥶', keywords: ['cold', 'freezing'] }, { emoji: '🥵', keywords: ['hot', 'sweating'] }, { emoji: '🤢', keywords: ['nauseated', 'sick'] }, { emoji: '🤮', keywords: ['vomiting', 'sick'] }, { emoji: '🫩', keywords: ['pregnant', 'woman'] }, { emoji: '😴', keywords: ['sleeping', 'zzz'] }, { emoji: '😪', keywords: ['sleepy', 'tired'] }, { emoji: '🤧', keywords: ['sneezing', 'sick'] }, { emoji: '🤒', keywords: ['thermometer', 'sick'] }, { emoji: '🤕', keywords: ['bandage', 'injured'] }, { emoji: '😷', keywords: ['mask', 'sick'] }, { emoji: '🤥', keywords: ['lying', 'pinocchio'] }, { emoji: '😇', keywords: ['angel', 'halo'] }, { emoji: '🤠', keywords: ['cowboy', 'hat'] }, { emoji: '🤑', keywords: ['money mouth', 'rich'] }, { emoji: '🤓', keywords: ['nerd', 'glasses'] }, { emoji: '😎', keywords: ['sunglasses', 'cool'] }, { emoji: '🥸', keywords: ['disguised', 'glasses nose'] }, { emoji: '🤡', keywords: ['clown'] }, { emoji: '💩', keywords: ['poop', 'crap'] }, { emoji: '😈', keywords: ['devil', 'smiling'] }, { emoji: '👿', keywords: ['devil', 'angry'] }, { emoji: '👻', keywords: ['ghost'] }, { emoji: '💀', keywords: ['skull'] }, { emoji: '☠️', keywords: ['skull crossbones', 'danger'] }, { emoji: '👹', keywords: ['ogre', 'monster'] }, { emoji: '👺', keywords: ['goblin', 'monster'] }, { emoji: '☃️', keywords: ['snowman', 'winter'] }, { emoji: '⛄', keywords: ['snowman no snow', 'winter'] }, { emoji: '😺', keywords: ['cat', 'grinning'] }, { emoji: '😸', keywords: ['cat', 'smile'] }, { emoji: '😹', keywords: ['cat', 'joy', 'laugh'] }, { emoji: '😻', keywords: ['cat', 'heart eyes', 'love'] }, { emoji: '😼', keywords: ['cat', 'smirk'] }, { emoji: '😽', keywords: ['cat', 'kiss'] }, { emoji: '🙀', keywords: ['cat', 'scream', 'shock'] }, { emoji: '😿', keywords: ['cat', 'cry', 'sad'] }, { emoji: '😾', keywords: ['cat', 'pouting', 'angry'] }, { emoji: '🙈', keywords: ['see no evil', 'monkey'] }, { emoji: '🙉', keywords: ['hear no evil', 'monkey'] }, { emoji: '🙊', keywords: ['speak no evil', 'monkey'] }, { emoji: '💫', keywords: ['dizzy', 'star'] }, { emoji: '⭐', keywords: ['star'] }, { emoji: '🌟', keywords: ['glowing star', 'sparkle'] }, { emoji: '✨', keywords: ['sparkles', 'magic'] }, { emoji: '⚡', keywords: ['lightning', 'zap'] }, { emoji: '💥', keywords: ['collision', 'boom'] }, { emoji: '💢', keywords: ['anger', 'symbol'] }, { emoji: '💨', keywords: ['dash', 'wind'] }, { emoji: '💦', keywords: ['sweat drops', 'water'] }, { emoji: '💤', keywords: ['sleep', 'zzz'] }, { emoji: '🕳️', keywords: ['hole'] }, { emoji: '🔥', keywords: ['fire', 'lit'] }, { emoji: '💯', keywords: ['100', 'score'] }, { emoji: '🎉', keywords: ['tada', 'party'] }, { emoji: '🎊', keywords: ['confetti', 'celebrate'] }, { emoji: '❤️', keywords: ['heart', 'love', 'red'] }, { emoji: '💗', keywords: ['growing heart', 'love'] }, { emoji: '💘', keywords: ['heart arrow', 'love'] }, { emoji: '💖', keywords: ['sparkling heart', 'love'] }, { emoji: '💝', keywords: ['ribbon heart', 'gift', 'love'] }, { emoji: '❣️', keywords: ['exclamation heart', 'love'] }, { emoji: '🫀', keywords: ['anatomical heart', 'organ'] }, { emoji: '👍🏻', keywords: ['thumbs up', 'like'] }, { emoji: '👎', keywords: ['thumbs down', 'dislike'] }, { emoji: '🫶', keywords: ['heart hands', 'love'] }, { emoji: '🙌', keywords: ['raising hands', 'celebrate'] }, { emoji: '👐', keywords: ['open hands', 'hug'] }, { emoji: '🤜', keywords: ['fist bump', 'right'] }, { emoji: '🤛', keywords: ['fist bump', 'left'] }, { emoji: '✊', keywords: ['fist', 'power'] }, { emoji: '👊', keywords: ['punch', 'fist'] }, { emoji: '🫳', keywords: ['palm down', 'drop'] }, { emoji: '🫴', keywords: ['palm up', 'receive'] }, { emoji: '🫱', keywords: ['rightwards hand', 'offer'] }, { emoji: '🫲', keywords: ['leftwards hand', 'receive'] }, { emoji: '🫸', keywords: ['pushing right', 'stop'] }, { emoji: '🫷', keywords: ['pushing left', 'stop'] }, { emoji: '👋', keywords: ['wave', 'hello', 'bye'] }, { emoji: '🤚', keywords: ['raised hand', 'stop'] }, { emoji: '🖐️', keywords: ['raised hand', 'five'] }, { emoji: '✋', keywords: ['raised hand', 'stop'] }, { emoji: '🖖', keywords: ['vulcan salute', 'spock'] }, { emoji: '🤟', keywords: ['love you', 'gesture'] }, { emoji: '🤘', keywords: ['rock on', 'horns'] }, { emoji: '✌️', keywords: ['peace', 'two'] }, { emoji: '🤞', keywords: ['fingers crossed', 'luck'] }, { emoji: '🫰', keywords: ['heart finger', 'love'] }, { emoji: '🤙', keywords: ['call me', 'shaka'] }, { emoji: '👇', keywords: ['down'] }, { emoji: '👆', keywords: ['up'] }, { emoji: '☝️', keywords: ['up', 'one'] }, { emoji: '👈', keywords: ['left'] }, { emoji: '👉', keywords: ['right'] }, { emoji: '🫵', keywords: ['you', 'point'] }, { emoji: '👌', keywords: ['ok', 'perfect'] }, { emoji: '🤏', keywords: ['pinching', 'small'] }, { emoji: '🤌', keywords: ['pinched fingers', 'italian'] }, { emoji: '🖕', keywords: ['middle finger'] }, { emoji: '✍️', keywords: ['writing', 'write'] }, { emoji: '🤳', keywords: ['selfie'] }, { emoji: '🙏', keywords: ['pray', 'namaste', 'thanks'] }, { emoji: '💅', keywords: ['nail polish', 'care'] }, { emoji: '🤝', keywords: ['handshake', 'deal'] },
+];
 
+const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void }) => {
+    const [search, setSearch] = useState('');
+
+    const filteredEmojis = useMemo(() => {
+        if (!search) return emojiList;
+        const lowercasedSearch = search.toLowerCase();
+        return emojiList.filter(e => e.keywords.some(kw => kw.includes(lowercasedSearch)));
+    }, [search]);
 
     return (
         <Popover>
@@ -157,20 +172,32 @@ const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void
                     <span className="sr-only">Add emoji</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-2">
-                <div className="grid grid-cols-4 gap-1">
-                    {emojis.map(emoji => (
-                        <Button
-                            key={emoji}
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEmojiSelect(emoji)}
-                            className="text-xl"
-                        >
-                            {emoji}
-                        </Button>
-                    ))}
+            <PopoverContent className="w-80 p-2">
+                <div className="relative mb-2">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search emoji..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-8"
+                    />
                 </div>
+                <ScrollArea className="h-60">
+                    <div className="grid grid-cols-8 gap-1 p-1">
+                        {filteredEmojis.map(({ emoji, keywords }) => (
+                            <Button
+                                key={emoji}
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEmojiSelect(emoji)}
+                                className="text-xl"
+                                title={keywords.join(', ')}
+                            >
+                                {emoji}
+                            </Button>
+                        ))}
+                    </div>
+                </ScrollArea>
             </PopoverContent>
         </Popover>
     )
