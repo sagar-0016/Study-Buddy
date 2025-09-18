@@ -347,7 +347,7 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                         className="pr-28 resize-none"
                         disabled={isReplying || doubt.isCleared} 
                     />
-                    <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1">
                         <EmojiPicker onEmojiSelect={(emoji) => setReplyText(replyText + emoji)} />
                         <AddLinkDialog onLinkAdd={setLinkUrl} />
                     </div>
