@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -172,18 +171,20 @@ const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void
                     <span className="sr-only">Add emoji</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-2">
-                <div className="relative mb-2">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search emoji..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-8"
-                    />
+            <PopoverContent className="w-80 p-0">
+                <div className="p-2 border-b">
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search emoji..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-8 h-8"
+                        />
+                    </div>
                 </div>
                 <ScrollArea className="h-60">
-                    <div className="grid grid-cols-8 gap-1 p-1">
+                    <div className="grid grid-cols-8 gap-1 p-2">
                         {filteredEmojis.map(({ emoji, keywords }) => (
                             <Button
                                 key={emoji}
@@ -504,3 +505,5 @@ export default function DoubtCentre() {
         </div>
     );
 }
+
+    
