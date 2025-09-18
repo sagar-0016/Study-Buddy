@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface FloatingBrowserProps {
-  url: string;
+  url: string | null;
   onClose: () => void;
 }
 
@@ -16,30 +16,36 @@ export default function DoubtFloatingBrowser({ url, onClose }: FloatingBrowserPr
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
 
+    useEffect(() => {
+        if (url) {
+            setIsLoading(true);
+            const timer = setTimeout(() => {
+                if (isLoading) {
+                     toast({
+                        title: "Content may be blocked",
+                        description: "If the window remains blank, the external site may be preventing it from being embedded. Try opening it in a new tab.",
+                        variant: "destructive",
+                        duration: 8000,
+                    });
+                }
+            }, 5000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [url, isLoading, toast]);
+
+
+    if (!url) return null;
+
     const handleIframeLoad = () => {
         setIsLoading(false);
     };
-    
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (isLoading) {
-                 toast({
-                    title: "Content may be blocked",
-                    description: "If the window remains blank, the external site may be preventing it from being embedded. Try opening it in a new tab.",
-                    variant: "destructive",
-                    duration: 8000,
-                });
-            }
-        }, 5000);
-
-        return () => clearTimeout(timer);
-    }, [isLoading, toast]);
 
     const isPdf = url.endsWith('.pdf') || url.includes('.pdf?');
     const displayUrl = isPdf ? `/api/proxy-pdf?url=${encodeURIComponent(url)}` : url;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 animate-in fade-in-25" onClick={onClose}>
             <div
                 className="relative z-[101] bg-card border shadow-2xl rounded-lg flex flex-col w-full max-w-4xl h-[90vh]"
                 onClick={(e) => e.stopPropagation()}

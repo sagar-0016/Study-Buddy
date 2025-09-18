@@ -261,7 +261,7 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
         <Dialog onOpenChange={(open) => { if (open) fetchThread(); }}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
-                <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />
+                {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
                     <div>
