@@ -19,14 +19,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useClassMode } from '@/context/class-mode-context';
 import { cn } from '@/lib/utils';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { format } from 'date-fns';
 import { useAuth } from '@/context/auth-context';
-import FloatingBrowser from '../shared/floating-browser';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+import FloatingPdfViewer from './floating-pdf-viewer';
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     const [doubtText, setDoubtText] = useState('');
@@ -159,92 +154,13 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
     )
 }
 
-const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }) => {
-    const [numPages, setNumPages] = useState<number | null>(null);
-    const [pageNumber, setPageNumber] = useState(1);
-    const [scale, setScale] = useState(0.9);
-    const [fitMode, setFitMode] = useState<'width' | 'zoom'>('width');
-    const containerRef = useRef<HTMLDivElement>(null);
-    const { toast } = useToast();
-
-    function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-        setNumPages(numPages);
-        setPageNumber(1);
-    }
-
-    function onDocumentLoadError(error: Error) {
-        toast({
-            title: "PDF Load Error",
-            description: `Failed to load PDF: ${error.message}`,
-            variant: "destructive",
-        })
-        console.error('Error while loading document!', error);
-    }
-    
-    const proxiedUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`;
-    
-    const containerWidth = containerRef.current?.clientWidth;
-
-    return (
-        <div className="flex flex-col h-full bg-background">
-             <div className="flex-shrink-0 sticky top-0 z-10 p-1 bg-background/80 backdrop-blur-sm border-b flex items-center justify-between gap-2">
-                <Button variant="ghost" size="sm" onClick={onBack}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
-                <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPageNumber(p => Math.max(p - 1, 1))} disabled={pageNumber <= 1}>
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-xs font-medium">Page {pageNumber} of {numPages || '...'}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPageNumber(p => Math.min(p + 1, numPages || 1))} disabled={!numPages || pageNumber >= numPages}>
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
-                    <div className="w-px h-6 bg-border mx-1"></div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} disabled={scale <= 0.5 || fitMode === 'width'}>
-                        <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="text-xs font-medium">{fitMode === 'width' ? 'Fit' : `${Math.round(scale * 100)}%`}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.min(s + 0.2, 3))} disabled={scale >= 3 || fitMode === 'width'}>
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                    <div className="w-px h-6 bg-border mx-1"></div>
-                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setFitMode(m => m === 'width' ? 'zoom' : 'width')}>
-                        {fitMode === 'width' ? <ZoomIn className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                    </Button>
-                </div>
-            </div>
-            <div ref={containerRef} className="flex-grow bg-muted/20 overflow-auto">
-                <div className={cn("flex justify-center", fitMode === 'zoom' && "h-full")}>
-                    <div className={cn(fitMode === 'zoom' && "overflow-auto")}>
-                        <Document
-                            file={proxiedUrl}
-                            onLoadSuccess={onDocumentLoadSuccess}
-                            onLoadError={onDocumentLoadError}
-                            loading={<Skeleton className='h-full w-full'/>}
-                            className="flex justify-center"
-                        >
-                            <Page 
-                                pageNumber={pageNumber} 
-                                scale={fitMode === 'width' ? 1 : scale}
-                                width={fitMode === 'width' && containerWidth ? containerWidth - 20 : undefined}
-                                renderTextLayer={true} 
-                            />
-                        </Document>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode: boolean }) => {
+const NotesSection = ({ lecture, isClassMode, onNoteClick }: { lecture: Lecture, isClassMode: boolean, onNoteClick: (url: string, type: 'pdf' | 'link') => void }) => {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const { pauseLocking } = useAuth();
 
     const fetchNotes = useCallback(async () => {
@@ -314,14 +230,10 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     const NoteItem = ({ note }: { note: LectureNote }) => {
         const isUserUploaded = !note.name.startsWith("Sample");
 
-        const handleClick = () => {
-            setViewingUrl(note.url);
-        };
-
         return (
             <div className="flex items-center gap-2">
                 <button
-                    onClick={handleClick}
+                    onClick={() => onNoteClick(note.url, note.type)}
                     className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left flex-grow"
                 >
                     {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
@@ -335,10 +247,6 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
             </div>
         );
     };
-
-    if (viewingUrl) {
-        return <FloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />
-    }
 
     return (
         <Card className={cn("h-full", isClassMode && "border-0 shadow-none rounded-none")}>
@@ -469,6 +377,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoadingNotes, setIsLoadingNotes] = useState(true);
     const [rightPanelWidth, setRightPanelWidth] = useState(400);
+    const [activeUrl, setActiveUrl] = useState<string | null>(null);
 
     const fetchNotes = useCallback(async () => {
         setIsLoadingNotes(true);
@@ -481,6 +390,14 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         fetchNotes();
     }, [fetchNotes, lecture.id]);
 
+    const handleNoteClick = (url: string, type: 'pdf' | 'link') => {
+        if (type === 'link') {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
+            setActiveUrl(url);
+        }
+    };
+    
     useEffect(() => {
         // This effect is now tied to isClassMode state.
         // It runs a cleanup function ONLY when the component unmounts.
@@ -495,6 +412,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     return (
         <div className="relative">
+            {activeUrl && <FloatingPdfViewer url={activeUrl} onClose={() => setActiveUrl(null)} />}
              <div className="mb-4 flex justify-end">
                 <Button variant="outline" onClick={toggleClassMode}>
                     {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
@@ -543,7 +461,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
                             <Card className="sticky top-20">
                                 <CardContent className="p-4">
-                                    <NotesSection lecture={lecture} isClassMode={isClassMode} />
+                                    <NotesSection lecture={lecture} isClassMode={isClassMode} onNoteClick={handleNoteClick} />
                                 </CardContent>
                             </Card>
                         </div>
@@ -552,7 +470,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
                 {isClassMode && (
                     <ResizablePanel width={rightPanelWidth} setWidth={setRightPanelWidth}>
-                        <NotesSection lecture={lecture} isClassMode={isClassMode} />
+                        <NotesSection lecture={lecture} isClassMode={isClassMode} onNoteClick={handleNoteClick} />
                     </ResizablePanel>
                 )}
             </div>
@@ -565,5 +483,3 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         </div>
     )
 }
-
-    
