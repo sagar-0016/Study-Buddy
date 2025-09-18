@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getDoubts, addDoubt, markDoubtAsCleared, getDoubtThread, addReplyToDoubt } from '@/lib/doubts';
+import { getDoubts, addDoubt, markDoubtAsCleared, getDoubtThread, addReplyToDoubt, markDoubtAsAddressed } from '@/lib/doubts';
 import type { Doubt, DoubtMessage, AccessLevel } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
@@ -137,13 +137,14 @@ const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
     )
 }
 
-const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void, children: React.ReactNode }) => {
+const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, onStateChange: () => void, children: React.ReactNode }) => {
     const [thread, setThread] = useState<DoubtMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
     const [linkUrl, setLinkUrl] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const [viewingUrl, setViewingUrl] = useState<string | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -155,6 +156,11 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
     }, [doubt.id, doubt.lectureId]);
     
     useEffect(() => {
+        const adminMode = localStorage.getItem('admin-mode') === 'true';
+        setIsAdmin(adminMode);
+    }, []);
+
+    useEffect(() => {
         endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [thread]);
 
@@ -162,9 +168,11 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
         if (!replyText) return;
         setIsReplying(true);
 
+        const sender = isAdmin ? 'admin' : 'user';
+
         const messageData: { text: string; sender: 'user' | 'admin'; mediaUrl?: string; mediaType?: 'link' } = {
             text: replyText,
-            sender: 'user'
+            sender: sender
         };
 
         if (linkUrl) {
@@ -183,7 +191,27 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
             setIsReplying(false);
         }
     };
+
+    const handleMarkAddressed = async () => {
+        try {
+            await markDoubtAsAddressed(doubt.id, doubt.lectureId);
+            toast({ title: 'Marked as Addressed', description: 'The user will be notified that their doubt is addressed.' });
+            onStateChange();
+        } catch (error) {
+            toast({ title: 'Error', description: 'Could not mark as addressed.', variant: 'destructive' });
+        }
+    }
     
+    const handleMarkCleared = async () => {
+        try {
+            await markDoubtAsCleared(doubt.id, doubt.lectureId);
+            toast({ title: 'Success', description: 'Doubt thread marked as cleared.' });
+            onStateChange();
+        } catch(error) {
+            toast({ title: 'Error', description: 'Could not update the doubt status.', variant: 'destructive' });
+        }
+    }
+
     const handleLinkClick = (url: string) => {
         setViewingUrl(url);
     }
@@ -233,7 +261,7 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
         <Dialog onOpenChange={(open) => { if (open) fetchThread(); }}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
-                {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
+                <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />
                 <DialogHeader>
                     <DialogTitle>{doubt.text}</DialogTitle>
                     <div>
@@ -282,20 +310,26 @@ const DoubtThreadDialog = ({ doubt, onCleared, children }: { doubt: Doubt, onCle
                 </div>
 
 
-                {doubt.isAddressed && !doubt.isCleared && (
-                    <DialogFooter className='border-t pt-4'>
-                        <Button onClick={() => onCleared(doubt.id, doubt.lectureId)}>
+                <DialogFooter className="border-t pt-4 flex-wrap gap-2">
+                    {isAdmin && !doubt.isAddressed && (
+                         <Button variant="secondary" onClick={handleMarkAddressed}>
+                            <Circle className="mr-2 h-4 w-4" />
+                            Mark as Addressed
+                        </Button>
+                    )}
+                    {!isAdmin && doubt.isAddressed && !doubt.isCleared && (
+                        <Button onClick={handleMarkCleared}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Mark as Cleared
                         </Button>
-                    </DialogFooter>
-                )}
+                    )}
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 };
 
-const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (doubtId: string, lectureId?: string) => void }) => {
+const DoubtCard = ({ doubt, onStateChange }: { doubt: Doubt, onStateChange: () => void }) => {
     const getStatus = () => {
         if (doubt.isCleared) return { text: 'Cleared by you', icon: CheckCircle, color: 'text-green-600' };
         if (doubt.isAddressed) return { text: 'Admin Replied', icon: AlertCircle, color: 'text-yellow-600' };
@@ -305,7 +339,7 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (doubtId: st
     const { text, icon: Icon, color } = getStatus();
 
     return (
-        <DoubtThreadDialog doubt={doubt} onCleared={onCleared}>
+        <DoubtThreadDialog doubt={doubt} onStateChange={onStateChange}>
             <Card className="cursor-pointer transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
                 <CardHeader>
                     <div className="flex justify-between items-start gap-4">
@@ -348,14 +382,9 @@ export default function DoubtCentre() {
         fetchDoubts();
     }, [fetchDoubts]);
     
-    const handleMarkCleared = async (doubtId: string, lectureId?: string) => {
-        try {
-            await markDoubtAsCleared(doubtId, lectureId);
-            fetchDoubts(); // Re-fetch all doubts to ensure UI is consistent
-            toast({ title: 'Success', description: 'Doubt thread marked as cleared.' });
-        } catch(error) {
-            toast({ title: 'Error', description: 'Could not update the doubt status.', variant: 'destructive' });
-        }
+    const handleStateChange = () => {
+        // Just re-fetch all doubts to ensure UI is consistent
+        fetchDoubts();
     }
 
     const renderContent = () => {
@@ -381,7 +410,7 @@ export default function DoubtCentre() {
         return (
             <div className="space-y-4">
                 {doubts.map(doubt => (
-                    <DoubtCard key={doubt.id} doubt={doubt} onCleared={handleMarkCleared} />
+                    <DoubtCard key={doubt.id} doubt={doubt} onStateChange={handleStateChange} />
                 ))}
             </div>
         )

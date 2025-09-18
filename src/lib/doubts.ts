@@ -124,6 +124,7 @@ export const addReplyToDoubt = async (
     await updateDoc(doubtRef, {
         'lastReply.text': messageData.text,
         'lastReply.timestamp': now,
+        'lastReply.sender': messageData.sender,
     });
 
     return newDocRef.id;
@@ -177,6 +178,29 @@ export const getDoubtThread = async (doubtId: string, lectureId?: string): Promi
 };
 
 /**
+ * Marks a doubt as addressed by an admin.
+ * @param {string} doubtId - The ID of the doubt document to update.
+ * @param {string} [lectureId] - The lecture ID if it's a nested doubt.
+ */
+export const markDoubtAsAddressed = async (doubtId: string, lectureId?: string): Promise<void> => {
+     try {
+        const doubtPath = lectureId ? `lectures/${lectureId}/doubts/${doubtId}` : `doubts/${doubtId}`;
+        const doubtRef = doc(db, doubtPath);
+            
+        const docSnap = await getDoc(doubtRef);
+        if (docSnap.exists()) {
+             await updateDoc(doubtRef, { isAddressed: true });
+        } else {
+            console.warn(`Attempted to mark non-existent doubt as addressed: ${doubtPath}`);
+        }
+    } catch (error) {
+        console.error(`Error marking doubt ${doubtId} as addressed:`, error);
+        throw error;
+    }
+}
+
+
+/**
  * Marks a doubt as cleared by the user.
  * This function needs to handle both top-level and nested doubts.
  * @param {string} doubtId - The ID of the doubt document to update.
@@ -189,7 +213,6 @@ export const markDoubtAsCleared = async (doubtId: string, lectureId?: string): P
             : `doubts/${doubtId}`;
         const doubtRef = doc(db, doubtPath);
             
-        // First check if the document exists to avoid unnecessary errors
         const docSnap = await getDoc(doubtRef);
         if (docSnap.exists()) {
              await updateDoc(doubtRef, {

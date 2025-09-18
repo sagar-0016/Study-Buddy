@@ -179,6 +179,7 @@ export interface Doubt extends DocumentData {
     lastReply?: {
         text: string;
         timestamp: Timestamp;
+        sender: 'user' | 'admin';
     }
 }
 
