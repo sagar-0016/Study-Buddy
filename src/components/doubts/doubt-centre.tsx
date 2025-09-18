@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle, Smile } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -22,6 +22,11 @@ import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import DoubtFloatingBrowser from './doubt-floating-browser';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, children: React.ReactNode }) => {
     const [text, setText] = useState('');
@@ -115,7 +120,7 @@ const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="absolute right-12 top-1/2 -translate-y-1/2 h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
                     <LinkIcon className="h-4 w-4" />
                     <span className="sr-only">Add link</span>
                 </Button>
@@ -134,6 +139,36 @@ const AddLinkDialog = ({ onLinkAdd }: { onLinkAdd: (url: string) => void }) => {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    )
+}
+
+const EmojiPicker = ({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void }) => {
+    const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉'];
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Smile className="h-4 w-4" />
+                    <span className="sr-only">Add emoji</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-2">
+                <div className="grid grid-cols-4 gap-2">
+                    {emojis.map(emoji => (
+                        <Button
+                            key={emoji}
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEmojiSelect(emoji)}
+                            className="text-xl"
+                        >
+                            {emoji}
+                        </Button>
+                    ))}
+                </div>
+            </PopoverContent>
+        </Popover>
     )
 }
 
@@ -303,10 +338,13 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                         onChange={(e) => setReplyText(e.target.value)} 
                         placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
                         rows={1}
-                        className="pr-24 resize-none"
+                        className="pr-28 resize-none"
                         disabled={isReplying || doubt.isCleared} 
                     />
-                    <AddLinkDialog onLinkAdd={setLinkUrl} />
+                    <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center">
+                        <EmojiPicker onEmojiSelect={(emoji) => setReplyText(replyText + emoji)} />
+                        <AddLinkDialog onLinkAdd={setLinkUrl} />
+                    </div>
                     <Button 
                         onClick={handleReply} 
                         disabled={!replyText || isReplying || doubt.isCleared} 
