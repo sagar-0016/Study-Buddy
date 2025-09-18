@@ -263,15 +263,25 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
             <DialogContent className="sm:max-w-lg md:max-w-2xl flex flex-col h-[80vh]">
                 {viewingUrl && <DoubtFloatingBrowser url={viewingUrl} onClose={() => setViewingUrl(null)} />}
                 <DialogHeader>
-                    <DialogTitle>{doubt.text}</DialogTitle>
-                    <div>
-                        <span className="text-sm text-muted-foreground">
-                            Conversation about your doubt in {doubt.subject}.
-                        </span>
-                        {doubt.lectureTitle && (
-                        <span className="block mt-1">
-                                <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
-                        </span>
+                    <div className="flex justify-between items-start gap-4">
+                        <div>
+                            <DialogTitle>{doubt.text}</DialogTitle>
+                            <div>
+                                <span className="text-sm text-muted-foreground">
+                                    Conversation about your doubt in {doubt.subject}.
+                                </span>
+                                {doubt.lectureTitle && (
+                                <span className="block mt-1">
+                                        <Badge variant="outline">From lecture: {doubt.lectureTitle}</Badge>
+                                </span>
+                                )}
+                            </div>
+                        </div>
+                        {!isAdmin && doubt.isAddressed && !doubt.isCleared && (
+                            <Button onClick={handleMarkCleared} variant="outline" size="sm" className="flex-shrink-0">
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Mark as Cleared
+                            </Button>
                         )}
                     </div>
                 </DialogHeader>
@@ -310,17 +320,11 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                 </div>
 
 
-                <DialogFooter className="border-t pt-4 flex-wrap gap-2">
+                <DialogFooter className="border-t pt-4">
                     {isAdmin && !doubt.isAddressed && (
                          <Button variant="secondary" onClick={handleMarkAddressed}>
                             <Circle className="mr-2 h-4 w-4" />
                             Mark as Addressed
-                        </Button>
-                    )}
-                    {!isAdmin && doubt.isAddressed && !doubt.isCleared && (
-                        <Button onClick={handleMarkCleared}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Mark as Cleared
                         </Button>
                     )}
                 </DialogFooter>
