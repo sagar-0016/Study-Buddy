@@ -85,7 +85,7 @@ export default function DoubtFloatingBrowser({ url, onClose }: FloatingBrowserPr
     }
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in-25" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4 animate-in fade-in-25" onClick={onClose}>
             <div
                 className="relative z-[101] bg-card border shadow-2xl rounded-lg flex flex-col w-full max-w-4xl h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
