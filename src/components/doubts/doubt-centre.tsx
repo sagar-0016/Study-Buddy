@@ -346,7 +346,7 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                     <DialogTitle>{doubt.text}</DialogTitle>
                     <div>
                         <span className="text-sm text-muted-foreground">
-                            Conversation about your doubt in {doubt.subject}.
+                            Subject: {doubt.subject}
                         </span>
                         {doubt.lectureTitle && (
                         <span className="block mt-1">
@@ -526,3 +526,4 @@ export default function DoubtCentre() {
     
 
     
+
