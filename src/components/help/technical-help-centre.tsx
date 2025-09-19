@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle2, AlertCircle, HelpCircle, Send, MessageSquareText } from 'lucide-react';
@@ -24,6 +25,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '../ui/separator';
+import { useAuth } from '@/context/auth-context';
 
 const AddHelpRequestDialog = ({ onHelpRequestAdded, children }: { onHelpRequestAdded: () => void, children: React.ReactNode }) => {
     const [text, setText] = useState('');
@@ -32,6 +34,8 @@ const AddHelpRequestDialog = ({ onHelpRequestAdded, children }: { onHelpRequestA
     const [isSaving, setIsSaving] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { pauseLocking } = useAuth();
 
     const canSubmit = useMemo(() => text && category, [text, category]);
 
@@ -39,6 +43,16 @@ const AddHelpRequestDialog = ({ onHelpRequestAdded, children }: { onHelpRequestA
         setText('');
         setCategory('');
         setImageFile(null);
+    };
+    
+    const triggerFileInput = () => {
+        toast({
+            title: "File Upload",
+            description: "App locking is paused for 10 seconds while you select a file.",
+            duration: 10000,
+        });
+        pauseLocking(10000);
+        fileInputRef.current?.click();
     };
 
     const handleSubmit = async () => {
@@ -94,7 +108,11 @@ const AddHelpRequestDialog = ({ onHelpRequestAdded, children }: { onHelpRequestA
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="image">Attach Screenshot (Optional)</Label>
-                        <Input id="image" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} accept="image/*"/>
+                         <Button variant="outline" onClick={triggerFileInput} className="w-full">
+                            <ImageIcon className="mr-2 h-4 w-4" /> Choose Screenshot
+                        </Button>
+                        <input ref={fileInputRef} id="image" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} accept="image/*" className="hidden"/>
+                         {imageFile && <p className="text-sm text-muted-foreground">Selected: {imageFile.name}</p>}
                     </div>
                 </div>
                 <DialogFooter>
@@ -249,3 +267,5 @@ export default function TechnicalHelpCentre() {
         </div>
     );
 }
+
+    

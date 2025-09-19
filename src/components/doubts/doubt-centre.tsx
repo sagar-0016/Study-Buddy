@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -36,6 +37,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { pauseLocking } = useAuth();
 
     const canSubmit = useMemo(() => text && subject, [text, subject]);
 
@@ -46,6 +48,12 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     };
 
     const triggerFileInput = () => {
+        toast({
+            title: "File Upload",
+            description: "App locking is paused for 10 seconds while you select a file.",
+            duration: 10000,
+        });
+        pauseLocking(10000);
         fileInputRef.current?.click();
     }
 
@@ -505,6 +513,8 @@ export default function DoubtCentre() {
         </div>
     );
 }
+
+    
 
     
 
