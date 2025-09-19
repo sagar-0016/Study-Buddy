@@ -317,7 +317,12 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                                     <Image src={message.mediaUrl} alt="Doubt media" width={300} height={200} className="object-cover w-full" />
                                 </button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-3xl"><Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" /></DialogContent>
+                            <DialogContent className="max-w-3xl">
+                                <DialogHeader>
+                                    <DialogTitle>Attached Image</DialogTitle>
+                                </DialogHeader>
+                                <Image src={message.mediaUrl} alt="Doubt media" width={800} height={600} className="rounded-lg object-contain" />
+                            </DialogContent>
                         </Dialog>
                     )}
                     <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
