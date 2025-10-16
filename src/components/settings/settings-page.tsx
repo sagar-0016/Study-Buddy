@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Bot, User, Blend } from "lucide-react";
+import MenstrualCycleTracker from "./menstrual-cycle-tracker";
 
 export type MotivationMode = "ai" | "personal" | "mixed";
 
@@ -46,6 +47,7 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6">
             <ProfileCard />
+            <MenstrualCycleTracker />
             <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader>
                     <CardTitle>Motivation Corner</CardTitle>

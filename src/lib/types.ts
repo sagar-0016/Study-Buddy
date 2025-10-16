@@ -229,4 +229,16 @@ export interface FeatureTip extends DocumentData {
     read: boolean;
 }
 
+export interface PeriodData {
+    expectedDate: Date;
+    actualStartDate?: Date;
+    actualEndDate?: Date;
+}
+
+export interface PeriodLog {
+    id?: string;
+    startDate: Date;
+    endDate: Date;
+    cycleLength: number;
+}
     
