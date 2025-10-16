@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, HeartPulse, Sparkles, Heart, Droplets, Utensils, Bed, Wind } from 'lucide-react';
+import { Loader2, HeartPulse, Sparkles, Heart, Droplets, Utensils, Bed, Wind, Heater } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPeriodData, logPeriodStart, logPeriodEnd } from '@/lib/periods';
 import type { PeriodData } from '@/lib/types';
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Skeleton } from '../ui/skeleton';
 
@@ -26,14 +27,20 @@ const periodCareTips = [
     {
         icon: Droplets,
         title: "Stay Hydrated",
-        text: "Drink plenty of water. Warm herbal tea, like ginger or chamomile, can also be very soothing for cramps.",
+        text: "Drinking plenty of water is really important. It can help reduce bloating and ease cramps.",
         color: "text-blue-500",
     },
     {
         icon: Utensils,
         title: "Nourish Your Body",
-        text: "Focus on iron-rich foods like spinach and lentils. A small piece of dark chocolate isn't just a treat—it can help with cramps!",
+        text: "Salty foods like chips or some Chinese dishes can sometimes make bloating worse. But it's also okay to have your comfort food! A banana can be great for potassium.",
         color: "text-green-500",
+    },
+    {
+        icon: Heater,
+        title: "Warm Compresses are Friends",
+        text: "Using a heating pad or a warm water bottle on your tummy can work wonders for cramps. It's like a warm hug for your muscles.",
+        color: "text-orange-500",
     },
     {
         icon: Wind,
@@ -111,6 +118,9 @@ const PeriodCareDialog = ({ children }: { children: React.ReactNode }) => {
                         </motion.div>
                     ))}
                 </motion.div>
+                <DialogFooter className="text-center w-full">
+                    <p className="text-sm text-muted-foreground italic w-full">You're doing amazing. This will pass soon, and you'll be back to conquering the world (and JEE)!</p>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
