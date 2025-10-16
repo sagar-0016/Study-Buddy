@@ -22,6 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Skeleton } from '../ui/skeleton';
+import { ScrollArea } from '../ui/scroll-area';
 
 const periodCareTips = [
     {
@@ -31,16 +32,16 @@ const periodCareTips = [
         color: "text-blue-500",
     },
     {
-        icon: Utensils,
-        title: "Nourish Your Body",
-        text: "Salty foods like chips or some Chinese dishes can sometimes make bloating worse. But it's also okay to have your comfort food! A banana can be great for potassium.",
-        color: "text-green-500",
-    },
-    {
         icon: Heater,
         title: "Warm Compresses are Friends",
         text: "Using a heating pad or a warm water bottle on your tummy can work wonders for cramps. It's like a warm hug for your muscles.",
         color: "text-orange-500",
+    },
+    {
+        icon: Utensils,
+        title: "Nourish Your Body",
+        text: "Some find that salty foods (like chips or some Chinese dishes) can make bloating worse. A banana can be great for potassium, but it's also okay to have your favorite comfort food!",
+        color: "text-green-500",
     },
     {
         icon: Wind,
@@ -82,8 +83,8 @@ const PeriodCareDialog = ({ children }: { children: React.ReactNode }) => {
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-                <DialogHeader className="text-center">
+            <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+                <DialogHeader className="text-center flex-shrink-0">
                     <motion.div
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -96,29 +97,31 @@ const PeriodCareDialog = ({ children }: { children: React.ReactNode }) => {
                         Listen to your body. Being kind to yourself is the most productive thing you can do right now.
                     </DialogDescription>
                 </DialogHeader>
-                <motion.div
-                    className="space-y-4 py-4"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                >
-                    {periodCareTips.map((tip) => (
-                        <motion.div key={tip.title} variants={itemVariants}>
-                             <Card className="bg-muted/50 border-0">
-                                <CardContent className="p-4 flex items-start gap-4">
-                                    <div className="p-2 bg-background rounded-full">
-                                      <tip.icon className={`h-6 w-6 ${tip.color}`} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">{tip.title}</h4>
-                                        <p className="text-sm text-muted-foreground">{tip.text}</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    ))}
-                </motion.div>
-                <DialogFooter className="text-center w-full">
+                <ScrollArea className="flex-grow my-4">
+                     <motion.div
+                        className="space-y-4 pr-6"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        {periodCareTips.map((tip) => (
+                            <motion.div key={tip.title} variants={itemVariants}>
+                                <Card className="bg-muted/50 border-0">
+                                    <CardContent className="p-4 flex items-start gap-4">
+                                        <div className="p-2 bg-background rounded-full">
+                                        <tip.icon className={`h-6 w-6 ${tip.color}`} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold">{tip.title}</h4>
+                                            <p className="text-sm text-muted-foreground">{tip.text}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </ScrollArea>
+                <DialogFooter className="text-center w-full flex-shrink-0">
                     <p className="text-sm text-muted-foreground italic w-full">You're doing amazing. This will pass soon, and you'll be back to conquering the world (and JEE)!</p>
                 </DialogFooter>
             </DialogContent>
