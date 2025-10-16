@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, HeartPulse, Sparkles } from 'lucide-react';
+import { Loader2, HeartPulse, Sparkles, Heart, Droplets, Utensils, Bed, Wind } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPeriodData, logPeriodStart, logPeriodEnd } from '@/lib/periods';
 import type { PeriodData } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -21,32 +22,100 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from '../ui/skeleton';
 
+const periodCareTips = [
+    {
+        icon: Droplets,
+        title: "Stay Hydrated",
+        text: "Drink plenty of water. Warm herbal tea, like ginger or chamomile, can also be very soothing for cramps.",
+        color: "text-blue-500",
+    },
+    {
+        icon: Utensils,
+        title: "Nourish Your Body",
+        text: "Focus on iron-rich foods like spinach and lentils. A small piece of dark chocolate isn't just a treat—it can help with cramps!",
+        color: "text-green-500",
+    },
+    {
+        icon: Wind,
+        title: "Gentle Movement",
+        text: "Light stretching, yoga, or a short walk can really help ease cramps and boost your mood. No need for intense workouts.",
+        color: "text-purple-500",
+    },
+    {
+        icon: Bed,
+        title: "Prioritize Rest",
+        text: "Your body is doing a lot of work. If you feel tired, listen to it. A nap isn't lazy, it's necessary for recovery.",
+        color: "text-yellow-500",
+    },
+];
+
 const PeriodCareDialog = ({ children }: { children: React.ReactNode }) => {
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.2,
+            },
+        },
+    };
+
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: {
+                type: 'spring',
+                stiffness: 100,
+            },
+        },
+    };
+
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2"><Sparkles className="text-primary" /> Period Care Tips</DialogTitle>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader className="text-center">
+                    <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="mx-auto bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-fit mb-4"
+                    >
+                        <Heart className="h-10 w-10 text-red-500" />
+                    </motion.div>
+                    <DialogTitle>It's Okay to Slow Down</DialogTitle>
                     <DialogDescription>
-                        Listen to your body. It's okay to slow down.
+                        Listen to your body. Being kind to yourself is the most productive thing you can do right now.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground space-y-3 py-4">
-                    <p>When you're on your period, your body is working hard. Be gentle with yourself. Here are a few things that might help:</p>
-                    <ul>
-                        <li><strong>Hydrate:</strong> Drink plenty of water. Warm herbal tea, like ginger or chamomile, can also be very soothing.</li>
-                        <li><strong>Nutrition:</strong> Focus on iron-rich foods like spinach and lentils. Magnesium-rich foods like dark chocolate and almonds can help with cramps.</li>
-                        <li><strong>Gentle Movement:</strong> Light stretching, yoga, or a short walk can help ease cramps and boost your mood. Avoid intense workouts if you don't feel up to it.</li>
-                        <li><strong>Rest:</strong> Prioritize sleep. If you need a nap, take one. Your body needs rest to recover.</li>
-                        <li><strong>Comfort:</strong> A warm compress or hot water bottle on your lower abdomen can work wonders for cramps.</li>
-                    </ul>
-                    <p>Remember, it's okay to adjust your study schedule. Your health comes first.</p>
-                </div>
+                <motion.div
+                    className="space-y-4 py-4"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    {periodCareTips.map((tip) => (
+                        <motion.div key={tip.title} variants={itemVariants}>
+                             <Card className="bg-muted/50 border-0">
+                                <CardContent className="p-4 flex items-start gap-4">
+                                    <div className="p-2 bg-background rounded-full">
+                                      <tip.icon className={`h-6 w-6 ${tip.color}`} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold">{tip.title}</h4>
+                                        <p className="text-sm text-muted-foreground">{tip.text}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    ))}
+                </motion.div>
             </DialogContent>
         </Dialog>
     );
-}
+};
+
 
 export default function MenstrualCycleTracker() {
     const [periodData, setPeriodData] = useState<PeriodData | null>(null);
