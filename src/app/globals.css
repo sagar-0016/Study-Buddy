@@ -128,29 +128,48 @@
     }
   }
 
-  .floating-circle {
+  .floating-heart {
     position: absolute;
     bottom: -30px;
-    background-color: rgba(255, 105, 180, 0.7);
-    border-radius: 50%;
     animation-name: float;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
   }
 
-  .floating-circle:nth-child(1) { left: 5%; animation-duration: 15s; animation-delay: 0s; width: 20px; height: 20px; }
-  .floating-circle:nth-child(2) { left: 10%; animation-duration: 12s; animation-delay: 2s; width: 30px; height: 30px; }
-  .floating-circle:nth-child(3) { left: 15%; animation-duration: 18s; animation-delay: 4s; width: 15px; height: 15px; }
-  .floating-circle:nth-child(4) { left: 20%; animation-duration: 16s; animation-delay: 1s; width: 25px; height: 25px; }
-  .floating-circle:nth-child(5) { left: 28%; animation-duration: 13s; animation-delay: 3s; width: 35px; height: 35px; }
-  .floating-circle:nth-child(6) { left: 35%; animation-duration: 17s; animation-delay: 5s; width: 22px; height: 22px; }
-  .floating-circle:nth-child(7) { left: 45%; animation-duration: 14s; animation-delay: 1s; width: 28px; height: 28px; }
-  .floating-circle:nth-child(8) { left: 55%; animation-duration: 19s; animation-delay: 0s; width: 18px; height: 18px; }
-  .floating-circle:nth-child(9) { left: 65%; animation-duration: 11s; animation-delay: 4s; width: 32px; height: 32px; }
-  .floating-circle:nth-child(10) { left: 70%; animation-duration: 20s; animation-delay: 2s; width: 24px; height: 24px; }
-  .floating-circle:nth-child(11) { left: 78%; animation-duration: 15s; animation-delay: 6s; width: 19px; height: 19px; }
-  .floating-circle:nth-child(12) { left: 85%; animation-duration: 14s; animation-delay: 3s; width: 27px; height: 27px; }
-  .floating-circle:nth-child(13) { left: 90%; animation-duration: 16s; animation-delay: 5s; width: 21px; height: 21px; }
-  .floating-circle:nth-child(14) { left: 92%; animation-duration: 18s; animation-delay: 1s; width: 33px; height: 33px; }
-  .floating-circle:nth-child(15) { left: 95%; animation-duration: 13s; animation-delay: 4s; width: 26px; height: 26px; }
+  .floating-heart::before,
+  .floating-heart::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 105, 180, 0.7);
+    border-radius: 50%;
+  }
+
+  .floating-heart::before {
+    transform: translateX(-50%);
+  }
+  
+  .floating-heart::after {
+    transform: translateY(-50%);
+  }
+
+
+  .floating-heart:nth-child(1) { left: 5%; animation-duration: 15s; animation-delay: 0s; width: 20px; height: 20px; }
+  .floating-heart:nth-child(2) { left: 10%; animation-duration: 12s; animation-delay: 2s; width: 30px; height: 30px; }
+  .floating-heart:nth-child(3) { left: 15%; animation-duration: 18s; animation-delay: 4s; width: 15px; height: 15px; }
+  .floating-heart:nth-child(4) { left: 20%; animation-duration: 16s; animation-delay: 1s; width: 25px; height: 25px; }
+  .floating-heart:nth-child(5) { left: 28%; animation-duration: 13s; animation-delay: 3s; width: 35px; height: 35px; }
+  .floating-heart:nth-child(6) { left: 35%; animation-duration: 17s; animation-delay: 5s; width: 22px; height: 22px; }
+  .floating-heart:nth-child(7) { left: 45%; animation-duration: 14s; animation-delay: 1s; width: 28px; height: 28px; }
+  .floating-heart:nth-child(8) { left: 55%; animation-duration: 19s; animation-delay: 0s; width: 18px; height: 18px; }
+  .floating-heart:nth-child(9) { left: 65%; animation-duration: 11s; animation-delay: 4s; width: 32px; height: 32px; }
+  .floating-heart:nth-child(10) { left: 70%; animation-duration: 20s; animation-delay: 2s; width: 24px; height: 24px; }
+  .floating-heart:nth-child(11) { left: 78%; animation-duration: 15s; animation-delay: 6s; width: 19px; height: 19px; }
+  .floating-heart:nth-child(12) { left: 85%; animation-duration: 14s; animation-delay: 3s; width: 27px; height: 27px; }
+  .floating-heart:nth-child(13) { left: 90%; animation-duration: 16s; animation-delay: 5s; width: 21px; height: 21px; }
+  .floating-heart:nth-child(14) { left: 92%; animation-duration: 18s; animation-delay: 1s; width: 33px; height: 33px; }
+  .floating-heart:nth-child(15) { left: 95%; animation-duration: 13s; animation-delay: 4s; width: 26px; height: 26px; }
 }
