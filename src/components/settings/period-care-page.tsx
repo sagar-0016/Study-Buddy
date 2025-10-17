@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -46,7 +45,7 @@ const periodCareTips = [
     },
 ];
 
-const heartChars = ['♡', '♥', '❣', 'ღ', '💖', '💗'];
+const heartChars = ['♡', '♥', '❣', 'ღ', '♥️', '💗'];
 const floatingHearts = Array.from({ length: 15 }, (_, i) => ({
   id: i,
   char: heartChars[i % heartChars.length],
