@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 
 const periodCareTips = [
@@ -78,7 +80,13 @@ export default function PeriodCarePage() {
         <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
              <div className="absolute inset-0 -z-10 pointer-events-none">
                 {floatingHearts.map((heart) => (
-                  <div key={heart.id} className="floating-heart">
+                  <div 
+                    key={heart.id} 
+                    className={cn(
+                        "floating-heart",
+                        heart.char === '💗' && "glowing-heart"
+                    )}
+                  >
                     {heart.char}
                   </div>
                 ))}
