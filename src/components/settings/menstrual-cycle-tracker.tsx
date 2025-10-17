@@ -1,135 +1,18 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, HeartPulse, Sparkles, Heart, Droplets, Utensils, Bed, Wind, Heater } from 'lucide-react';
+import { Loader2, HeartPulse } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPeriodData, logPeriodStart, logPeriodEnd } from '@/lib/periods';
 import type { PeriodData } from '@/lib/types';
 import { differenceInDays, format, parseISO, isToday } from 'date-fns';
-import { motion } from 'framer-motion';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Skeleton } from '../ui/skeleton';
-import { ScrollArea } from '../ui/scroll-area';
-
-const periodCareTips = [
-    {
-        icon: Droplets,
-        title: "Stay Hydrated",
-        text: "Drinking plenty of water is really important. It can help reduce bloating and ease cramps.",
-        color: "text-blue-500",
-    },
-    {
-        icon: Heater,
-        title: "Warm Compresses are Friends",
-        text: "Using a heating pad or a warm water bottle on your tummy can work wonders for cramps. It's like a warm hug for your muscles.",
-        color: "text-orange-500",
-    },
-    {
-        icon: Utensils,
-        title: "Nourish Your Body",
-        text: "Some find that salty foods (like chips or some Chinese dishes) can make bloating worse. A banana can be great for potassium, but it's also okay to have your favorite comfort food!",
-        color: "text-green-500",
-    },
-    {
-        icon: Wind,
-        title: "Gentle Movement",
-        text: "Light stretching, yoga, or a short walk can really help ease cramps and boost your mood. No need for intense workouts.",
-        color: "text-purple-500",
-    },
-    {
-        icon: Bed,
-        title: "Prioritize Rest",
-        text: "Your body is doing a lot of work. If you feel tired, listen to it. A nap isn't lazy, it's necessary for recovery.",
-        color: "text-yellow-500",
-    },
-];
-
-const PeriodCareDialog = ({ children }: { children: React.ReactNode }) => {
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.2,
-            },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: {
-            y: 0,
-            opacity: 1,
-            transition: {
-                type: 'spring',
-                stiffness: 100,
-            },
-        },
-    };
-
-    return (
-        <Dialog>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
-                <DialogHeader className="text-center flex-shrink-0">
-                    <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="mx-auto bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-fit mb-4"
-                    >
-                        <Heart className="h-10 w-10 text-red-500" />
-                    </motion.div>
-                    <DialogTitle>It's Okay to Slow Down</DialogTitle>
-                    <DialogDescription>
-                        Listen to your body. Being kind to yourself is the most productive thing you can do right now.
-                    </DialogDescription>
-                </DialogHeader>
-                <ScrollArea className="flex-grow my-4">
-                     <motion.div
-                        className="space-y-4 pr-6"
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                    >
-                        {periodCareTips.map((tip) => (
-                            <motion.div key={tip.title} variants={itemVariants}>
-                                <Card className="bg-muted/50 border-0">
-                                    <CardContent className="p-4 flex items-start gap-4">
-                                        <div className="p-2 bg-background rounded-full">
-                                        <tip.icon className={`h-6 w-6 ${tip.color}`} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold">{tip.title}</h4>
-                                            <p className="text-sm text-muted-foreground">{tip.text}</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </ScrollArea>
-                <DialogFooter className="text-center w-full flex-shrink-0 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground italic w-full">You're doing amazing. This will pass soon, and you'll be back to conquering the world (and JEE)!</p>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
 
 export default function MenstrualCycleTracker() {
     const [periodData, setPeriodData] = useState<PeriodData | null>(null);
@@ -208,24 +91,26 @@ export default function MenstrualCycleTracker() {
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
         if (periodData.actualStartDate && !periodData.actualEndDate) {
-            const startDateIsToday = isToday(periodData.actualStartDate);
-            return (
-                <CardContent className="space-y-4">
-                    <div className="text-center space-y-2">
-                        <p className="text-lg text-muted-foreground">I hear you. The most important thing right now is to be gentle with yourself. Your body is working hard, and it's okay to take things a bit slower. Your strength isn't just in studying, but also in knowing when to rest and recharge. </p>
-                        <p className="text-sm text-muted-foreground">Whenever you're ready, just come back here to log the end date so we can prepare for the next cycle together. No rush at all.</p>
-                    </div>
-                     <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t">
-                        <div className="grid w-full sm:max-w-sm items-center gap-1.5">
-                            <Label htmlFor="end-date">End Date</Label>
-                            <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
+             const startDateIsToday = isToday(new Date(actualStartDate));
+             return (
+                <CardContent className="space-y-4 text-center">
+                    <p className="text-lg text-muted-foreground leading-relaxed">
+                        I hear you. The most important thing right now is to be gentle with yourself. Your body is working hard, and it's okay to take things a bit slower. Your strength isn't just in studying, but also in knowing when to rest and recharge.
+                    </p>
+                    
+                    {!startDateIsToday && (
+                        <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t justify-center">
+                            <div className="grid w-full sm:max-w-sm items-center gap-1.5 text-left">
+                                <Label htmlFor="end-date">End Date</Label>
+                                <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
+                            </div>
+                            <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
+                                {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
+                            </Button>
                         </div>
-                        <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
-                            {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
-                        </Button>
-                    </div>
+                    )}
                 </CardContent>
-            );
+             )
         }
 
         if (daysUntilExpected > 14) {
@@ -235,7 +120,7 @@ export default function MenstrualCycleTracker() {
             return <CardContent><p className="text-muted-foreground text-center italic">Less than two weeks left.</p></CardContent>;
         }
         if (daysUntilExpected > 2) {
-             return <CardContent><p className="text-muted-foreground text-center italic">Less than a week left.</p></CardContent>;
+             return <CardContent><p className="text-muted-foreground text-center italic">Less than one week left.</p></CardContent>;
         }
         if (daysUntilExpected > 0 && daysUntilExpected <= 2) {
             return <CardContent><p className="text-muted-foreground text-center italic">Just a couple of days now. Stay prepared!</p></CardContent>;
@@ -278,9 +163,9 @@ export default function MenstrualCycleTracker() {
                         <CardDescription>A gentle reminder to listen to your body.</CardDescription>
                     </div>
                      {showCareButton && (
-                        <PeriodCareDialog>
-                            <Button variant="secondary">Period Care</Button>
-                        </PeriodCareDialog>
+                        <Button asChild variant="secondary">
+                           <Link href="/settings/period-care">Period Care</Link>
+                        </Button>
                      )}
                 </div>
             </CardHeader>
