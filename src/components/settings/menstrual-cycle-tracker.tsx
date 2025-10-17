@@ -191,8 +191,8 @@ export default function MenstrualCycleTracker() {
             )
         }
 
-        if (!periodData) {
-            return null; // Don't render anything if there's no data (cycle logged or too far away)
+        if (!periodData || periodData.actualEndDate) {
+            return null; // Don't render anything if there's no data or the cycle is logged as ended
         }
 
         const today = new Date();
@@ -200,13 +200,26 @@ export default function MenstrualCycleTracker() {
         const expectedDate = periodData.expectedDate;
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
-        // If cycle has been logged as ended, hide component
-        if (periodData.actualEndDate) {
-            return null;
+        // If the cycle has already started, show the end date input
+        if (periodData.actualStartDate) {
+             return (
+                <CardContent className="space-y-4">
+                    <p className="text-muted-foreground">Hope you're taking it easy. Did your period end?</p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-end">
+                            <div className="grid w-full sm:max-w-sm items-center gap-1.5">
+                            <Label htmlFor="end-date">End Date</Label>
+                            <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
+                        </div>
+                        <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
+                            {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
+                        </Button>
+                    </div>
+                </CardContent>
+            );
         }
 
-        // Countdown view
-        if (daysUntilExpected > 2 && !periodData.actualStartDate) {
+        // If it's more than 2 days away, show a simple countdown
+        if (daysUntilExpected > 2) {
             const weeks = Math.round(daysUntilExpected / 7);
             let message = `About ${daysUntilExpected} days to go.`;
             if (weeks > 1) {
@@ -218,39 +231,39 @@ export default function MenstrualCycleTracker() {
                 </CardContent>
             )
         }
+        
+        // If it's within 2 days, show a heads-up
+        if (daysUntilExpected > 0) {
+             let message = `Just a heads-up, your period is expected in about ${daysUntilExpected} day${daysUntilExpected > 1 ? 's' : ''}.`;
+             if (daysUntilExpected === 0) message = "Just a heads-up, your period is expected today.";
 
-        // Main interaction view
-        return (
-            <CardContent className="space-y-6">
-                {!periodData.actualStartDate ? (
-                    <div className="space-y-4">
-                        <p className="text-muted-foreground">Your next period is expected soon. Did it start?</p>
-                        <div className="flex flex-col sm:flex-row gap-4 items-end">
-                            <div className="grid w-full sm:max-w-sm items-center gap-1.5">
-                                <Label htmlFor="start-date">Start Date</Label>
-                                <Input id="start-date" type="date" value={actualStartDate} onChange={(e) => setActualStartDate(e.target.value)} />
-                            </div>
-                            <Button onClick={handleLogStart} disabled={isSaving || !actualStartDate}>
-                                {isSaving ? <Loader2 className="animate-spin" /> : "Log Start Date"}
-                            </Button>
+            return (
+                <CardContent>
+                    <p className="text-muted-foreground text-center italic">{message}</p>
+                </CardContent>
+            )
+        }
+
+
+        // If the expected date is today or has passed, show the start date input
+        if (daysUntilExpected <= 0) {
+             return (
+                <CardContent className="space-y-4">
+                    <p className="text-muted-foreground">Your next period is expected around now. Did it start?</p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-end">
+                        <div className="grid w-full sm:max-w-sm items-center gap-1.5">
+                            <Label htmlFor="start-date">Actual Start Date</Label>
+                            <Input id="start-date" type="date" value={actualStartDate} onChange={(e) => setActualStartDate(e.target.value)} />
                         </div>
+                        <Button onClick={handleLogStart} disabled={isSaving || !actualStartDate}>
+                            {isSaving ? <Loader2 className="animate-spin" /> : "It Started"}
+                        </Button>
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        <p className="text-muted-foreground">Your period has started. Did it end?</p>
-                        <div className="flex flex-col sm:flex-row gap-4 items-end">
-                             <div className="grid w-full sm:max-w-sm items-center gap-1.5">
-                                <Label htmlFor="end-date">End Date</Label>
-                                <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
-                            </div>
-                            <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
-                                {isSaving ? <Loader2 className="animate-spin" /> : "Log End Date"}
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </CardContent>
-        )
+                </CardContent>
+            );
+        }
+
+        return null;
     }
 
     // This condition will hide the whole card if the component logic decides there's nothing to show
