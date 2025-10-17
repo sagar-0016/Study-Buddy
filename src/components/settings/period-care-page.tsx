@@ -3,49 +3,12 @@
 
 import {
     Heart,
-    Droplets,
-    Wind,
-    Heater,
-    Bed,
-    Utensils
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useMemo }_from 'react';
+import { periodCareTips } from '@/lib/period-care-data';
 import { Card, CardContent } from '@/components/ui/card';
-import { useMemo } from 'react';
 
-
-const periodCareTips = [
-    {
-        icon: Droplets,
-        title: "Stay Hydrated",
-        text: "Sip some water like the self-care queen you are — bloating doesn’t stand a chance when you stay hydrated.",
-        color: "text-blue-500",
-    },
-    {
-        icon: Heater,
-        title: "Warm Compresses are Your Friend",
-        text: "Warmth fixes everything — cramps, moods, and bad rom-com endings. Try a warm bottle or a heating pad for that sweet relief.",
-        color: "text-orange-500",
-    },
-    {
-        icon: Utensils,
-        title: "Nourish Your Body",
-        text: "Your body deserves love — and maybe a brownie too. Go for light, wholesome foods and something that makes your soul happy.",
-        color: "text-green-500",
-    },
-    {
-        icon: Wind,
-        title: "Gentle Movement",
-        text: "Stretch, sway, or dance it out like nobody’s watching. Even a short walk can lift your mood and calm your cramps.",
-        color: "text-purple-500",
-    },
-    {
-        icon: Bed,
-        title: "Prioritize Rest",
-        text: "You’re not lazy — you’re recharging your goddess battery. Rest is your body’s way of saying, ‘Thanks for taking care of me.’",
-        color: "text-yellow-500",
-    },
-];
 
 const heartChars = ['♡', '♥', '❣', 'ღ', '♥️', '💗'];
 
@@ -72,22 +35,29 @@ export default function PeriodCarePage() {
         },
     };
     
-    // useMemo to prevent re-calculating on every render
-    const floatingHearts = useMemo(() => Array.from({ length: 15 }, (_, i) => ({
-      id: i,
-      char: heartChars[i % heartChars.length],
-      swayClass: `sway-${(i % 3) + 1}` // Assign sway-1, sway-2, sway-3
-    })), []);
+    const floatingHearts = useMemo(() => {
+        return Array.from({ length: 15 }).map((_, i) => {
+            const style = {
+                left: `${Math.random() * 100}%`, // Random horizontal position
+                animationDuration: `${Math.random() * 8 + 10}s`, // Random duration between 10s and 18s
+                animationDelay: `${Math.random() * 15}s`, // Random delay up to 15s
+            };
+            const character = heartChars[i % heartChars.length];
+            const swayClass = `sway-${(i % 3) + 1}`;
+            return { style, character, swayClass, id: i };
+        });
+    }, []);
 
     return (
         <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
              <div className="absolute inset-0 -z-10 pointer-events-none">
-                {floatingHearts.map((heart) => (
+                {floatingHearts.map(heart => (
                   <div 
                     key={heart.id} 
                     className={`floating-heart ${heart.swayClass}`}
+                    style={heart.style}
                   >
-                    {heart.char}
+                    {heart.character}
                   </div>
                 ))}
             </div>
