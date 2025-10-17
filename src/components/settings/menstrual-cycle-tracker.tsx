@@ -208,11 +208,14 @@ export default function MenstrualCycleTracker() {
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
         if (periodData.actualStartDate && !periodData.actualEndDate) {
-             return (
+            return (
                 <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">Hope you're taking it easy. Did your period end?</p>
-                    <div className="flex flex-col sm:flex-row gap-4 items-end">
-                            <div className="grid w-full sm:max-w-sm items-center gap-1.5">
+                    <div className="text-center space-y-2">
+                        <p className="text-muted-foreground">Okay, date logged. Please take care of yourself. Have a look at the period care section if you need anything.</p>
+                        <p className="text-sm text-muted-foreground">Remember to come back and enter the end date later so we can analyze the next cycle!</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t">
+                        <div className="grid w-full sm:max-w-sm items-center gap-1.5">
                             <Label htmlFor="end-date">End Date</Label>
                             <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
                         </div>
@@ -263,7 +266,7 @@ export default function MenstrualCycleTracker() {
         return null;
     }
     
-    const showCareButton = !isLoading && periodData?.expectedDate && differenceInDays(new Date(), periodData.expectedDate) >= 0;
+    const showCareButton = !isLoading && periodData?.expectedDate && differenceInDays(new Date(), periodData.expectedDate) >= -2;
 
     return (
         <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
