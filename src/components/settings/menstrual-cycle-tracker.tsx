@@ -11,7 +11,7 @@ import { Loader2, HeartPulse, Sparkles, Heart, Droplets, Utensils, Bed, Wind, He
 import { useToast } from '@/hooks/use-toast';
 import { getPeriodData, logPeriodStart, logPeriodEnd } from '@/lib/periods';
 import type { PeriodData } from '@/lib/types';
-import { differenceInDays, format, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO, isToday } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
   Dialog,
@@ -208,21 +208,24 @@ export default function MenstrualCycleTracker() {
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
         if (periodData.actualStartDate && !periodData.actualEndDate) {
+            const startDateIsToday = isToday(periodData.actualStartDate);
             return (
                 <CardContent className="space-y-4">
                     <div className="text-center space-y-2">
-                        <p className="text-muted-foreground">Okay, date logged. Please take care of yourself. Have a look at the period care section if you need anything.</p>
-                        <p className="text-sm text-muted-foreground">Remember to come back and enter the end date later so we can analyze the next cycle!</p>
+                        <p className="text-lg text-muted-foreground">Okay, date logged. Please prioritize your well-being. This is a time to be gentle with yourself. Don't push too hard, rest when you need to, and know that it's okay to have a slower day.</p>
+                        <p className="text-sm text-muted-foreground">When you're ready, come back and enter the end date so we can prepare for your next cycle. No rush at all.</p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t">
-                        <div className="grid w-full sm:max-w-sm items-center gap-1.5">
-                            <Label htmlFor="end-date">End Date</Label>
-                            <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
+                    {!startDateIsToday && (
+                        <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t">
+                            <div className="grid w-full sm:max-w-sm items-center gap-1.5">
+                                <Label htmlFor="end-date">End Date</Label>
+                                <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
+                            </div>
+                            <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
+                                {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
+                            </Button>
                         </div>
-                        <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
-                            {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
-                        </Button>
-                    </div>
+                    )}
                 </CardContent>
             );
         }
