@@ -1,4 +1,5 @@
 
+
 // To run this script:
 // 1. Make sure you have tsx installed: npm install -g tsx
 // 2. Run from the root of your project: tsx ./src/scripts/populatePeriods.ts
@@ -28,10 +29,12 @@ const main = async () => {
 
         const periodRef = doc(db, 'periods', 'current');
         
-        // Set the initial expected date to 28 days from now
         const defaultExpectedDate = add(new Date(), { days: 28 });
+        const defaultCertainDate = add(defaultExpectedDate, { days: 2 });
+
         const initialData = { 
             expectedDate: Timestamp.fromDate(defaultExpectedDate),
+            certainDate: Timestamp.fromDate(defaultCertainDate),
             actualStartDate: null,
             actualEndDate: null,
         };

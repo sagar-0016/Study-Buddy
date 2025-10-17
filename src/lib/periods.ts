@@ -18,7 +18,11 @@ export const getPeriodData = async (): Promise<PeriodData> => {
 
   if (!docSnap.exists()) {
     const defaultExpectedDate = add(new Date(), { days: AVERAGE_CYCLE_LENGTH });
-    const defaultData = { expectedDate: Timestamp.fromDate(defaultExpectedDate) };
+    const defaultCertainDate = add(defaultExpectedDate, { days: 2 });
+    const defaultData = { 
+        expectedDate: Timestamp.fromDate(defaultExpectedDate),
+        certainDate: Timestamp.fromDate(defaultCertainDate),
+    };
     await setDoc(periodRef, defaultData);
     docSnap = await getDoc(periodRef); // Re-fetch the newly created doc
   }
@@ -26,6 +30,7 @@ export const getPeriodData = async (): Promise<PeriodData> => {
   const data = docSnap.data();
   return {
     expectedDate: (data?.expectedDate as Timestamp).toDate(),
+    certainDate: data?.certainDate ? (data.certainDate as Timestamp).toDate() : undefined,
     actualStartDate: data?.actualStartDate ? (data.actualStartDate as Timestamp).toDate() : undefined,
     actualEndDate: data?.actualEndDate ? (data.actualEndDate as Timestamp).toDate() : undefined,
   };
@@ -59,6 +64,7 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
     const currentPeriodData = currentPeriodSnap.data() as PeriodData;
     const actualStartDate = currentPeriodData.actualStartDate;
     const expectedDate = currentPeriodData.expectedDate;
+    const certainDate = currentPeriodData.certainDate;
 
     if (!actualStartDate) {
         throw new Error("Cannot log end date without a start date.");
@@ -70,17 +76,20 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
     await addDoc(periodLogRef, {
         startDate: Timestamp.fromDate(actualStartDate),
         endDate: Timestamp.fromDate(endDate),
-        expectedDate: Timestamp.fromDate(expectedDate), // Archive the expected date too
-        cycleLength: cycleLength > 0 ? cycleLength : 1, // Ensure cycle length is at least 1
+        expectedDate: Timestamp.fromDate(expectedDate),
+        certainDate: certainDate ? Timestamp.fromDate(certainDate) : null,
+        cycleLength: cycleLength > 0 ? cycleLength : 1,
         loggedAt: serverTimestamp()
     });
 
     // 2. Calculate next expected date (simple logic for now)
     const nextExpectedDate = add(actualStartDate, { days: AVERAGE_CYCLE_LENGTH });
+    const nextCertainDate = add(nextExpectedDate, { days: 2 }); // Keep the 2-day window
 
     // 3. Reset the 'current' period document for the next cycle
     await setDoc(periodRef, {
         expectedDate: Timestamp.fromDate(nextExpectedDate),
+        certainDate: Timestamp.fromDate(nextCertainDate),
         actualStartDate: null,
         actualEndDate: null, // Clear old end date
     });

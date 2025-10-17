@@ -174,6 +174,8 @@ export default function MenstrualCycleTracker() {
             await logPeriodEnd(parseISO(actualEndDate));
             const data = await getPeriodData();
             setPeriodData(data);
+            setActualStartDate('');
+            setActualEndDate('');
             toast({ title: "End Date Logged", description: "Your cycle has been logged. See you next time!" });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Could not save end date." });
@@ -193,6 +195,7 @@ export default function MenstrualCycleTracker() {
         }
 
         if (!periodData || periodData.actualEndDate) {
+            // Hide the card content if the cycle has been fully logged
             return null;
         }
 
@@ -201,6 +204,7 @@ export default function MenstrualCycleTracker() {
         const expectedDate = periodData.expectedDate;
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
+        // If a start date has been logged, we only need to ask for the end date.
         if (periodData.actualStartDate) {
              return (
                 <CardContent className="space-y-4">
@@ -218,21 +222,24 @@ export default function MenstrualCycleTracker() {
             );
         }
 
+        // Countdown logic before expected date
         if (daysUntilExpected > 14) {
-            return <CardContent><p className="text-muted-foreground text-center italic">More than two weeks to go.</p></CardContent>;
+            return <CardContent><p className="text-muted-foreground text-center italic">More than two weeks left.</p></CardContent>;
         }
         if (daysUntilExpected > 7) {
-            return <CardContent><p className="text-muted-foreground text-center italic">Less than two weeks to go.</p></CardContent>;
+            return <CardContent><p className="text-muted-foreground text-center italic">Less than two weeks left.</p></CardContent>;
         }
-        if (daysUntilExpected > 3) {
-            return <CardContent><p className="text-muted-foreground text-center italic">Less than a week to go.</p></CardContent>;
+        if (daysUntilExpected > 2) {
+             return <CardContent><p className="text-muted-foreground text-center italic">Less than a week left.</p></CardContent>;
         }
-        if (daysUntilExpected > 0) {
+        if (daysUntilExpected > 0 && daysUntilExpected <= 2) {
             return <CardContent><p className="text-muted-foreground text-center italic">Just a couple of days now. Stay prepared!</p></CardContent>;
         }
 
+        // Logic for when the expected date has arrived
         if (daysUntilExpected <= 0) {
-             return (
+            const daysUntilCertain = periodData.certainDate ? differenceInDays(periodData.certainDate, today) : null;
+            return (
                 <CardContent className="space-y-4">
                     <p className="text-muted-foreground">Your next period is expected around now. Did it start?</p>
                     <div className="flex flex-col sm:flex-row gap-4 items-end">
@@ -244,6 +251,11 @@ export default function MenstrualCycleTracker() {
                             {isSaving ? <Loader2 className="animate-spin" /> : "It Started"}
                         </Button>
                     </div>
+                    {daysUntilCertain !== null && daysUntilCertain > 0 && (
+                        <p className="text-xs text-muted-foreground text-center pt-2">
+                           {daysUntilCertain} day{daysUntilCertain > 1 ? 's' : ''} left until the certain date.
+                        </p>
+                    )}
                 </CardContent>
             );
         }
@@ -251,9 +263,18 @@ export default function MenstrualCycleTracker() {
         return null;
     }
 
-    const shouldShowCard = isLoading || (periodData && !periodData.actualEndDate);
+    const cardContent = renderContent();
+    if (isLoading) {
+         return (
+            <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+                <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
+                <CardContent><Skeleton className="h-12 w-full" /></CardContent>
+            </Card>
+        )
+    }
 
-    if (!shouldShowCard) {
+    // Don't render the card at all if there's nothing to show
+    if (!cardContent) {
         return null;
     }
 
@@ -270,7 +291,7 @@ export default function MenstrualCycleTracker() {
                     </PeriodCareDialog>
                 </div>
             </CardHeader>
-            {renderContent()}
+            {cardContent}
         </Card>
     );
 }
