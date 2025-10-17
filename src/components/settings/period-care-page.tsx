@@ -17,31 +17,31 @@ const periodCareTips = [
     {
         icon: Droplets,
         title: "Stay Hydrated",
-        text: "Drinking plenty of water can help reduce bloating and ease cramps. It's simple but really effective.",
+        text: "Sip some water like the self-care queen you are — bloating doesn’t stand a chance when you stay hydrated.",
         color: "text-blue-500",
     },
     {
         icon: Heater,
         title: "Warm Compresses are Your Friend",
-        text: "Using a heating pad, a warm water bottle, or even a warm cloth on your lower abdomen can work wonders for cramps. It's like a warm hug for your muscles.",
+        text: "Warmth fixes everything — cramps, moods, and bad rom-com endings. Try a warm bottle or a heating pad for that sweet relief.",
         color: "text-orange-500",
     },
     {
         icon: Utensils,
         title: "Nourish Your Body",
-        text: "Some find that salty foods (like chips or some Chinese dishes) can make bloating worse. A banana can be great for potassium, but it's also okay to have your favorite comfort food!",
+        text: "Your body deserves love — and maybe a brownie too. Go for light, wholesome foods and something that makes your soul happy.",
         color: "text-green-500",
     },
     {
         icon: Wind,
         title: "Gentle Movement",
-        text: "Light stretching, yoga, or a short walk can really help ease cramps and boost your mood. No need for intense workouts.",
+        text: "Stretch, sway, or dance it out like nobody’s watching. Even a short walk can lift your mood and calm your cramps.",
         color: "text-purple-500",
     },
     {
         icon: Bed,
         title: "Prioritize Rest",
-        text: "Your body is doing a lot of work. If you feel tired, listen to it. A nap isn't lazy, it's necessary for recovery.",
+        text: "You’re not lazy — you’re recharging your goddess battery. Rest is your body’s way of saying, ‘Thanks for taking care of me.’",
         color: "text-yellow-500",
     },
 ];
@@ -70,7 +70,20 @@ export default function PeriodCarePage() {
     };
     
     return (
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
+             <div className="absolute inset-0 -z-10 pointer-events-none">
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+                <Heart className="floating-heart" />
+            </div>
+
             <div className="text-center mb-8">
                 <motion.div
                     animate={{ scale: [1, 1.05, 1] }}
@@ -79,9 +92,9 @@ export default function PeriodCarePage() {
                 >
                     <Heart className="h-10 w-10 text-red-500" />
                 </motion.div>
-                <h1 className="text-3xl font-bold tracking-tight">It's Okay to Slow Down</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Hey, Superwoman — It’s Okay to Hit Pause 💕</h1>
                 <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-                    Listen to your body. Being kind to yourself is the most productive thing you can do right now.
+                    Your body’s doing something incredible right now. So be kind to yourself — you deserve softness, warmth, and maybe a cozy blanket burrito.
                 </p>
             </div>
              <motion.div
