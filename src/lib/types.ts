@@ -230,10 +230,10 @@ export interface FeatureTip extends DocumentData {
 }
 
 export interface PeriodData extends DocumentData {
-    expectedDate: Date;
-    certainDate?: Date;
-    actualStartDate?: Date;
-    actualEndDate?: Date;
+    expectedDate: Date | null;
+    certainDate?: Date | null;
+    actualStartDate?: Date | null;
+    actualEndDate?: Date | null;
 }
 
 export interface PeriodLog {

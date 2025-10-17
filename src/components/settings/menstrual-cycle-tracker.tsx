@@ -122,7 +122,7 @@ const PeriodCareDialog = ({ children }: { children: React.ReactNode }) => {
                         ))}
                     </motion.div>
                 </ScrollArea>
-                <DialogFooter className="text-center w-full flex-shrink-0">
+                <DialogFooter className="text-center w-full flex-shrink-0 pt-4 border-t">
                     <p className="text-sm text-muted-foreground italic w-full">You're doing amazing. This will pass soon, and you'll be back to conquering the world (and JEE)!</p>
                 </DialogFooter>
             </DialogContent>
@@ -172,7 +172,7 @@ export default function MenstrualCycleTracker() {
         setIsSaving(true);
         try {
             await logPeriodEnd(parseISO(actualEndDate));
-            const data = await getPeriodData();
+            const data = await getPeriodData(); // This will now fetch the reset data
             setPeriodData(data);
             setActualStartDate('');
             setActualEndDate('');
@@ -194,9 +194,12 @@ export default function MenstrualCycleTracker() {
             )
         }
 
-        if (!periodData || periodData.actualEndDate) {
-            // Hide the card content if the cycle has been fully logged
-            return null;
+        if (!periodData?.expectedDate) {
+            return (
+                 <CardContent>
+                    <p className="text-muted-foreground text-center italic">The expected date is yet to be analysed, study well, take care</p>
+                </CardContent>
+            )
         }
 
         const today = new Date();
@@ -204,8 +207,7 @@ export default function MenstrualCycleTracker() {
         const expectedDate = periodData.expectedDate;
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
-        // If a start date has been logged, we only need to ask for the end date.
-        if (periodData.actualStartDate) {
+        if (periodData.actualStartDate && !periodData.actualEndDate) {
              return (
                 <CardContent className="space-y-4">
                     <p className="text-muted-foreground">Hope you're taking it easy. Did your period end?</p>
@@ -222,7 +224,6 @@ export default function MenstrualCycleTracker() {
             );
         }
 
-        // Countdown logic before expected date
         if (daysUntilExpected > 14) {
             return <CardContent><p className="text-muted-foreground text-center italic">More than two weeks left.</p></CardContent>;
         }
@@ -235,8 +236,7 @@ export default function MenstrualCycleTracker() {
         if (daysUntilExpected > 0 && daysUntilExpected <= 2) {
             return <CardContent><p className="text-muted-foreground text-center italic">Just a couple of days now. Stay prepared!</p></CardContent>;
         }
-
-        // Logic for when the expected date has arrived
+        
         if (daysUntilExpected <= 0) {
             const daysUntilCertain = periodData.certainDate ? differenceInDays(periodData.certainDate, today) : null;
             return (
@@ -262,21 +262,8 @@ export default function MenstrualCycleTracker() {
 
         return null;
     }
-
-    const cardContent = renderContent();
-    if (isLoading) {
-         return (
-            <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
-                <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
-                <CardContent><Skeleton className="h-12 w-full" /></CardContent>
-            </Card>
-        )
-    }
-
-    // Don't render the card at all if there's nothing to show
-    if (!cardContent) {
-        return null;
-    }
+    
+    const showCareButton = !isLoading && periodData?.expectedDate && differenceInDays(new Date(), periodData.expectedDate) >= 0;
 
     return (
         <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
@@ -286,12 +273,14 @@ export default function MenstrualCycleTracker() {
                         <CardTitle className="flex items-center gap-2"><HeartPulse/>Menstrual Cycle</CardTitle>
                         <CardDescription>A gentle reminder to listen to your body.</CardDescription>
                     </div>
-                     <PeriodCareDialog>
-                        <Button variant="secondary">Period Care</Button>
-                    </PeriodCareDialog>
+                     {showCareButton && (
+                        <PeriodCareDialog>
+                            <Button variant="secondary">Period Care</Button>
+                        </PeriodCareDialog>
+                     )}
                 </div>
             </CardHeader>
-            {cardContent}
+            {renderContent()}
         </Card>
     );
 }
