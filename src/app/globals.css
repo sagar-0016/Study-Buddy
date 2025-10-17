@@ -148,7 +148,7 @@
 
   .floating-heart {
     position: absolute;
-    bottom: -30px;
+    bottom: -50px;
     color: rgba(255, 105, 180, 0.7);
     animation-name: float;
     animation-timing-function: linear;
