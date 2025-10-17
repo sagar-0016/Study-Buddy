@@ -72,16 +72,21 @@ export default function PeriodCarePage() {
     return (
         <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
              <div className="absolute inset-0 -z-10 pointer-events-none">
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
-                <Heart className="floating-heart" />
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
+                <div className="floating-circle"></div>
             </div>
 
             <div className="text-center mb-8">
