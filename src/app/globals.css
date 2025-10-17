@@ -140,11 +140,11 @@
     animation-name: float;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
-    color: hsl(340 82% 80% / 0.5);
+    color: hsl(340 82% 70% / 0.5);
   }
 
   .dark .floating-heart {
-      color: hsl(340 60% 40% / 0.4);
+      color: hsl(340 82% 60% / 0.4);
   }
 
   .floating-heart:nth-child(1) {
