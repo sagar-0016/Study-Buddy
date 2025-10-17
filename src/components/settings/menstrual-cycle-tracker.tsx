@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -172,7 +173,7 @@ export default function MenstrualCycleTracker() {
         try {
             await logPeriodEnd(parseISO(actualEndDate));
             const data = await getPeriodData();
-            setPeriodData(data); // This should now be null if the logic is correct
+            setPeriodData(data);
             toast({ title: "End Date Logged", description: "Your cycle has been logged. See you next time!" });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Could not save end date." });
@@ -192,7 +193,7 @@ export default function MenstrualCycleTracker() {
         }
 
         if (!periodData || periodData.actualEndDate) {
-            return null; // Don't render anything if there's no data or the cycle is logged as ended
+            return null;
         }
 
         const today = new Date();
@@ -200,7 +201,6 @@ export default function MenstrualCycleTracker() {
         const expectedDate = periodData.expectedDate;
         const daysUntilExpected = differenceInDays(expectedDate, today);
 
-        // If the cycle has already started, show the end date input
         if (periodData.actualStartDate) {
              return (
                 <CardContent className="space-y-4">
@@ -218,34 +218,19 @@ export default function MenstrualCycleTracker() {
             );
         }
 
-        // If it's more than 2 days away, show a simple countdown
-        if (daysUntilExpected > 2) {
-            const weeks = Math.round(daysUntilExpected / 7);
-            let message = `About ${daysUntilExpected} days to go.`;
-            if (weeks > 1) {
-                message = `About ${weeks} weeks to go.`;
-            }
-            return (
-                <CardContent>
-                    <p className="text-muted-foreground text-center italic">{message}</p>
-                </CardContent>
-            )
+        if (daysUntilExpected > 14) {
+            return <CardContent><p className="text-muted-foreground text-center italic">More than two weeks to go.</p></CardContent>;
         }
-        
-        // If it's within 2 days, show a heads-up
+        if (daysUntilExpected > 7) {
+            return <CardContent><p className="text-muted-foreground text-center italic">Less than two weeks to go.</p></CardContent>;
+        }
+        if (daysUntilExpected > 3) {
+            return <CardContent><p className="text-muted-foreground text-center italic">Less than a week to go.</p></CardContent>;
+        }
         if (daysUntilExpected > 0) {
-             let message = `Just a heads-up, your period is expected in about ${daysUntilExpected} day${daysUntilExpected > 1 ? 's' : ''}.`;
-             if (daysUntilExpected === 0) message = "Just a heads-up, your period is expected today.";
-
-            return (
-                <CardContent>
-                    <p className="text-muted-foreground text-center italic">{message}</p>
-                </CardContent>
-            )
+            return <CardContent><p className="text-muted-foreground text-center italic">Just a couple of days now. Stay prepared!</p></CardContent>;
         }
 
-
-        // If the expected date is today or has passed, show the start date input
         if (daysUntilExpected <= 0) {
              return (
                 <CardContent className="space-y-4">
@@ -266,7 +251,6 @@ export default function MenstrualCycleTracker() {
         return null;
     }
 
-    // This condition will hide the whole card if the component logic decides there's nothing to show
     const shouldShowCard = isLoading || (periodData && !periodData.actualEndDate);
 
     if (!shouldShowCard) {

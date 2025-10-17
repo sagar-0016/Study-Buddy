@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, serverTimestamp, addDoc, collection, updateDoc, Timestamp } from 'firebase/firestore';
 import { add, differenceInDays } from 'date-fns';
@@ -55,8 +56,9 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
     if (!currentPeriodSnap.exists()) {
         throw new Error("Current period data not found.");
     }
-    const currentPeriodData = currentPeriodSnap.data();
-    const actualStartDate = currentPeriodData.actualStartDate?.toDate();
+    const currentPeriodData = currentPeriodSnap.data() as PeriodData;
+    const actualStartDate = currentPeriodData.actualStartDate;
+    const expectedDate = currentPeriodData.expectedDate;
 
     if (!actualStartDate) {
         throw new Error("Cannot log end date without a start date.");
@@ -68,6 +70,7 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
     await addDoc(periodLogRef, {
         startDate: Timestamp.fromDate(actualStartDate),
         endDate: Timestamp.fromDate(endDate),
+        expectedDate: Timestamp.fromDate(expectedDate), // Archive the expected date too
         cycleLength: cycleLength > 0 ? cycleLength : 1, // Ensure cycle length is at least 1
         loggedAt: serverTimestamp()
     });
