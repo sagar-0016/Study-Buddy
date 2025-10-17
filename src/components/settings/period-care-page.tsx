@@ -46,6 +46,12 @@ const periodCareTips = [
     },
 ];
 
+const heartChars = ['♡', '♥', '❣', 'ღ', '💖', '💗'];
+const floatingHearts = Array.from({ length: 15 }, (_, i) => ({
+  id: i,
+  char: heartChars[i % heartChars.length],
+}));
+
 export default function PeriodCarePage() {
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -72,21 +78,11 @@ export default function PeriodCarePage() {
     return (
         <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
              <div className="absolute inset-0 -z-10 pointer-events-none">
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
-                <div className="floating-heart"></div>
+                {floatingHearts.map((heart) => (
+                  <div key={heart.id} className="floating-heart">
+                    {heart.char}
+                  </div>
+                ))}
             </div>
 
             <div className="text-center mb-8">
