@@ -118,25 +118,36 @@
   }
 
   /* Floating Hearts Animation for Period Care Page */
-  @keyframes float {
-    0% {
-      transform: translateY(0);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-120vh);
-      opacity: 0;
-    }
+  @keyframes float-sway-1 {
+    0% { transform: translateY(0) translateX(0); opacity: 1; }
+    50% { transform: translateY(-60vh) translateX(30px); }
+    100% { transform: translateY(-120vh) translateX(-30px); opacity: 0; }
+  }
+
+  @keyframes float-sway-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 1; }
+    50% { transform: translateY(-60vh) translateX(-40px); }
+    100% { transform: translateY(-120vh) translateX(40px); opacity: 0; }
+  }
+
+  @keyframes float-sway-3 {
+    0% { transform: translateY(0) translateX(0); opacity: 1; }
+    25% { transform: translateY(-30vh) translateX(25px); }
+    75% { transform: translateY(-90vh) translateX(-25px); }
+    100% { transform: translateY(-120vh) translateX(0px); opacity: 0; }
   }
   
   .floating-heart {
     position: absolute;
     bottom: -50px;
     color: rgba(255, 105, 180, 0.7);
-    animation-name: float;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
   }
+
+  .sway-1 { animation-name: float-sway-1; }
+  .sway-2 { animation-name: float-sway-2; }
+  .sway-3 { animation-name: float-sway-3; }
 
   .floating-heart:nth-child(1) { left: 5%; animation-duration: 15s; animation-delay: 0s; font-size: 20px; }
   .floating-heart:nth-child(2) { left: 10%; animation-duration: 12s; animation-delay: 2s; font-size: 30px; }

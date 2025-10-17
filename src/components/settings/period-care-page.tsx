@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
+import { useMemo } from 'react';
 
 
 const periodCareTips = [
@@ -47,10 +48,6 @@ const periodCareTips = [
 ];
 
 const heartChars = ['♡', '♥', '❣', 'ღ', '♥️', '💗'];
-const floatingHearts = Array.from({ length: 15 }, (_, i) => ({
-  id: i,
-  char: heartChars[i % heartChars.length],
-}));
 
 export default function PeriodCarePage() {
     const containerVariants = {
@@ -75,13 +72,20 @@ export default function PeriodCarePage() {
         },
     };
     
+    // useMemo to prevent re-calculating on every render
+    const floatingHearts = useMemo(() => Array.from({ length: 15 }, (_, i) => ({
+      id: i,
+      char: heartChars[i % heartChars.length],
+      swayClass: `sway-${(i % 3) + 1}` // Assign sway-1, sway-2, sway-3
+    })), []);
+
     return (
         <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
              <div className="absolute inset-0 -z-10 pointer-events-none">
                 {floatingHearts.map((heart) => (
                   <div 
                     key={heart.id} 
-                    className="floating-heart"
+                    className={`floating-heart ${heart.swayClass}`}
                   >
                     {heart.char}
                   </div>
