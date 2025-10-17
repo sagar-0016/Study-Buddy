@@ -212,20 +212,18 @@ export default function MenstrualCycleTracker() {
             return (
                 <CardContent className="space-y-4">
                     <div className="text-center space-y-2">
-                        <p className="text-lg text-muted-foreground">Okay, date logged. Please prioritize your well-being. This is a time to be gentle with yourself. Don't push too hard, rest when you need to, and know that it's okay to have a slower day.</p>
-                        <p className="text-sm text-muted-foreground">When you're ready, come back and enter the end date so we can prepare for your next cycle. No rush at all.</p>
+                        <p className="text-lg text-muted-foreground">I hear you. The most important thing right now is to be gentle with yourself. Your body is working hard, and it's okay to take things a bit slower. Your strength isn't just in studying, but also in knowing when to rest and recharge. </p>
+                        <p className="text-sm text-muted-foreground">Whenever you're ready, just come back here to log the end date so we can prepare for the next cycle together. No rush at all.</p>
                     </div>
-                    {!startDateIsToday && (
-                        <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t">
-                            <div className="grid w-full sm:max-w-sm items-center gap-1.5">
-                                <Label htmlFor="end-date">End Date</Label>
-                                <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
-                            </div>
-                            <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
-                                {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
-                            </Button>
+                     <div className="flex flex-col sm:flex-row gap-4 items-end pt-4 border-t">
+                        <div className="grid w-full sm:max-w-sm items-center gap-1.5">
+                            <Label htmlFor="end-date">End Date</Label>
+                            <Input id="end-date" type="date" value={actualEndDate} onChange={(e) => setActualEndDate(e.target.value)} />
                         </div>
-                    )}
+                        <Button onClick={handleLogEnd} disabled={isSaving || !actualEndDate}>
+                            {isSaving ? <Loader2 className="animate-spin" /> : "It Ended"}
+                        </Button>
+                    </div>
                 </CardContent>
             );
         }
