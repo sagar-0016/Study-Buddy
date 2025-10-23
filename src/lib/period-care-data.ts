@@ -1,9 +1,9 @@
 
-import { Mug, Heater, Film, Bed, Droplets } from 'lucide-react';
+import { GlassWater, Heater, Film, Bed, Droplets } from 'lucide-react';
 
 export const periodCareTips = [
     {
-        icon: Mug,
+        icon: GlassWater,
         title: "Warm & Cozy Drinks",
         text: "Sip on some chamomile tea or warm water. It helps soothe cramps and keeps you hydrated.",
         color: 'text-amber-500',
