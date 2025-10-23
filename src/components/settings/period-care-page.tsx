@@ -35,27 +35,49 @@ export default function PeriodCarePage() {
         },
     };
     
-    const floatingHearts = useMemo(() => {
-        return Array.from({ length: 15 }).map((_, i) => {
+    const { hearts, swayKeyframes } = useMemo(() => {
+        const generatedHearts = Array.from({ length: 15 }).map((_, i) => {
+            const swayName = `sway-${i}`;
+            const swayDuration = Math.random() * 4 + 3; // 3s to 7s
+            const startX = Math.random() * 80 - 40; // -40px to +40px
+            const endX = Math.random() * 80 - 40; // -40px to +40px
+
             const style = {
                 left: `${Math.random() * 100}%`,
-                animationDuration: `${Math.random() * 8 + 10}s`,
-                animationDelay: `${Math.random() * 15}s`,
+                animationDuration: `${Math.random() * 8 + 10}s, ${swayDuration}s`,
+                animationDelay: `${Math.random() * 15}s, ${Math.random() * -swayDuration}s`,
+                animationName: `float, ${swayName}`,
+                animationTimingFunction: 'linear, ease-in-out',
+                animationIterationCount: 'infinite, infinite',
+                animationDirection: 'normal, alternate',
             };
             const character = heartChars[i % heartChars.length];
-            const swayClass = `sway-${(i % 3) + 1}`;
-            return { style, character, swayClass, id: i };
+            
+            const keyframe = `
+                @keyframes ${swayName} {
+                    from { transform: translateX(0px); }
+                    to { transform: translateX(${endX - startX}px); }
+                }
+            `;
+
+            return { style, character, id: i, keyframe, initialTransform: `translateX(${startX}px)` };
         });
+
+        return {
+            hearts: generatedHearts,
+            swayKeyframes: generatedHearts.map(h => h.keyframe).join('\n')
+        };
     }, []);
 
     return (
         <div className="relative w-full max-w-2xl mx-auto overflow-hidden">
+             <style jsx>{swayKeyframes}</style>
              <div className="absolute inset-0 -z-10 pointer-events-none">
-                {floatingHearts.map(heart => (
+                {hearts.map(heart => (
                   <div 
                     key={heart.id} 
-                    className={`floating-heart ${heart.swayClass}`}
-                    style={heart.style}
+                    className="floating-heart"
+                    style={{ ...heart.style, transform: heart.initialTransform }}
                   >
                     {heart.character}
                   </div>
@@ -105,5 +127,3 @@ export default function PeriodCarePage() {
         </div>
     )
 }
-
-    
