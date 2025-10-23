@@ -119,32 +119,25 @@
 
   /* Floating Hearts Animation for Period Care Page */
   @keyframes float {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(-120vh); opacity: 0; }
+    0% {
+      transform: translateY(0) translateX(0px) rotate(0deg);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(-50vh) translateX(30px) rotate(180deg);
+    }
+    100% {
+      transform: translateY(-120vh) translateX(-30px) rotate(360deg);
+      opacity: 0;
+    }
   }
   
   .floating-heart {
     position: absolute;
     bottom: -50px;
     color: rgba(255, 105, 180, 0.7);
+    animation-name: float;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
-    animation-name: float;
   }
-
-  .floating-heart:nth-child(1) { left: 5%; animation-duration: 15s; animation-delay: 0s; font-size: 20px; }
-  .floating-heart:nth-child(2) { left: 10%; animation-duration: 12s; animation-delay: 2s; font-size: 30px; }
-  .floating-heart:nth-child(3) { left: 15%; animation-duration: 18s; animation-delay: 4s; font-size: 15px; }
-  .floating-heart:nth-child(4) { left: 20%; animation-duration: 16s; animation-delay: 1s; font-size: 25px; }
-  .floating-heart:nth-child(5) { left: 28%; animation-duration: 13s; animation-delay: 3s; font-size: 35px; }
-  .floating-heart:nth-child(6) { left: 35%; animation-duration: 17s; animation-delay: 5s; font-size: 22px; }
-  .floating-heart:nth-child(7) { left: 45%; animation-duration: 14s; animation-delay: 1s; font-size: 28px; }
-  .floating-heart:nth-child(8) { left: 55%; animation-duration: 19s; animation-delay: 0s; font-size: 18px; }
-  .floating-heart:nth-child(9) { left: 65%; animation-duration: 11s; animation-delay: 4s; font-size: 32px; }
-  .floating-heart:nth-child(10) { left: 70%; animation-duration: 20s; animation-delay: 2s; font-size: 24px; }
-  .floating-heart:nth-child(11) { left: 78%; animation-duration: 15s; animation-delay: 6s; font-size: 19px; }
-  .floating-heart:nth-child(12) { left: 85%; animation-duration: 14s; animation-delay: 3s; font-size: 27px; }
-  .floating-heart:nth-child(13) { left: 90%; animation-duration: 16s; animation-delay: 5s; font-size: 21px; }
-  .floating-heart:nth-child(14) { left: 92%; animation-duration: 18s; animation-delay: 1s; font-size: 33px; }
-  .floating-heart:nth-child(15) { left: 95%; animation-duration: 13s; animation-delay: 4s; font-size: 26px; }
 }
