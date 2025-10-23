@@ -38,9 +38,9 @@ export default function PeriodCarePage() {
     const floatingHearts = useMemo(() => {
         return Array.from({ length: 15 }).map((_, i) => {
             const style = {
-                left: `${Math.random() * 100}%`, // Random horizontal position
-                animationDuration: `${Math.random() * 8 + 10}s`, // Random duration between 10s and 18s
-                animationDelay: `${Math.random() * 15}s`, // Random delay up to 15s
+                left: `${Math.random() * 100}%`,
+                animationDuration: `${Math.random() * 8 + 10}s`,
+                animationDelay: `${Math.random() * 15}s`,
             };
             const character = heartChars[i % heartChars.length];
             const swayClass = `sway-${(i % 3) + 1}`;
@@ -105,3 +105,5 @@ export default function PeriodCarePage() {
         </div>
     )
 }
+
+    
