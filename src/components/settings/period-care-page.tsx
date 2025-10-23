@@ -5,7 +5,7 @@ import {
     Heart,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useMemo }_from 'react';
+import { useMemo } from 'react';
 import { periodCareTips } from '@/lib/period-care-data';
 import { Card, CardContent } from '@/components/ui/card';
 
