@@ -109,6 +109,8 @@ export const addReplyToDoubt = async (
         sender: 'user' | 'admin';
         mediaUrl?: string;
         mediaType?: 'link';
+        replyingToId?: string;
+        replyingToText?: string;
     }
 ): Promise<string> => {
     const doubtPath = lectureId ? `lectures/${lectureId}/doubts/${doubtId}` : `doubts/${doubtId}`;

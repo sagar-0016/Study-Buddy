@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle, Smile, Search } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle, AlertCircle, HelpCircle, Send, Reply, ShieldCheck, MessageCircle as MessageCircleIcon, Link as LinkIcon, FileText, ExternalLink, Check, Circle, Smile, Search, CornerDownLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -217,11 +217,13 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
     const [isLoading, setIsLoading] = useState(true);
     const [replyText, setReplyText] = useState('');
     const [linkUrl, setLinkUrl] = useState('');
+    const [replyingTo, setReplyingTo] = useState<{id: string, text: string} | null>(null);
     const [isReplying, setIsReplying] = useState(false);
     const [viewingUrl, setViewingUrl] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const { toast } = useToast();
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
+    const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
     const fetchThread = useCallback(async () => {
         setIsLoading(true);
@@ -239,26 +241,48 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
         endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [thread]);
 
+    const handlePrepareReply = (message: DoubtMessage) => {
+        setReplyingTo({ id: message.id, text: message.text });
+        replyInputRef.current?.focus();
+    }
+
+    const cancelReply = () => {
+        setReplyingTo(null);
+    }
+
     const handleReply = async () => {
         if (!replyText) return;
         setIsReplying(true);
 
         const sender = isAdmin ? 'admin' : 'user';
 
-        const messageData: { text: string; sender: 'user' | 'admin'; mediaUrl?: string; mediaType?: 'link' } = {
+        const messageData: { 
+            text: string; 
+            sender: 'user' | 'admin'; 
+            mediaUrl?: string; 
+            mediaType?: 'link';
+            replyingToId?: string;
+            replyingToText?: string;
+        } = {
             text: replyText,
-            sender: sender
+            sender: sender,
         };
 
         if (linkUrl) {
             messageData.mediaUrl = linkUrl;
             messageData.mediaType = 'link';
         }
+        
+        if (replyingTo) {
+            messageData.replyingToId = replyingTo.id;
+            messageData.replyingToText = replyingTo.text;
+        }
 
         try {
             await addReplyToDoubt(doubt.id, doubt.lectureId, messageData);
             setReplyText('');
             setLinkUrl('');
+            setReplyingTo(null);
             await fetchThread(); // Re-fetch the thread
         } catch (error) {
             toast({ title: 'Error', description: 'Could not send reply.', variant: 'destructive' });
@@ -295,12 +319,22 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
         const isUser = message.sender === 'user';
         const isLink = message.mediaType === 'link';
         const isImage = message.mediaType === 'image';
+        const isReply = message.replyingToId && message.replyingToText;
     
         return (
-            <div className={cn("flex w-full items-end gap-2", isUser ? "justify-end" : "justify-start")}>
-                 {!isUser && <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0 self-start" />}
+            <div className={cn("flex w-full items-end gap-2 group", isUser ? "justify-end" : "justify-start")}>
+                 {!isUser && <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0 self-start mt-2" />}
                  
                 <div className={cn("p-3 rounded-lg relative max-w-sm", isUser ? "bg-primary/10" : "bg-muted")}>
+                    {isReply && (
+                        <a 
+                            href={`#message-${message.replyingToId}`}
+                            className="block text-xs text-muted-foreground font-semibold border-l-2 border-primary/50 pl-2 mb-2 truncate italic hover:underline"
+                        >
+                            {message.replyingToText}
+                        </a>
+                    )}
+                    
                     {isLink && message.mediaUrl ? (
                         <button onClick={() => handleLinkClick(message.mediaUrl!)} className="flex items-center gap-2 text-left hover:underline text-blue-600 dark:text-blue-400">
                             <span className="font-medium">{message.text}</span>
@@ -325,7 +359,12 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                             </DialogContent>
                         </Dialog>
                     )}
-                    <p className="text-xs text-muted-foreground/80 mt-2 text-right">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handlePrepareReply(message)}>
+                            <Reply className="h-4 w-4" />
+                        </Button>
+                        <p className="text-xs text-muted-foreground/80">{message.createdAt?.toDate ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}</p>
+                    </div>
                 </div>
     
                 {isUser && (
@@ -378,29 +417,43 @@ const DoubtThreadDialog = ({ doubt, onStateChange, children }: { doubt: Doubt, o
                 
                 <Separator />
                 
-                <div className="relative">
-                    <Textarea 
-                        id={`reply-${doubt.id}`} 
-                        value={replyText} 
-                        onChange={(e) => setReplyText(e.target.value)} 
-                        placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
-                        rows={1}
-                        className="pr-28 resize-none"
-                        disabled={isReplying || doubt.isCleared} 
-                    />
-                    <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <EmojiPicker onEmojiSelect={(emoji) => setReplyText(replyText + emoji)} />
-                        <AddLinkDialog onLinkAdd={setLinkUrl} />
+                <div className="space-y-2">
+                    {replyingTo && (
+                        <div className="text-xs text-muted-foreground bg-muted p-2 rounded-md flex justify-between items-center">
+                           <div className="flex items-center gap-2 truncate">
+                             <CornerDownLeft className="h-3 w-3 flex-shrink-0" />
+                             <span className="truncate">Replying to: "{replyingTo.text}"</span>
+                           </div>
+                           <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0" onClick={cancelReply}>
+                             <X className="h-3 w-3" />
+                           </Button>
+                        </div>
+                    )}
+                    <div className="relative">
+                        <Textarea 
+                            ref={replyInputRef}
+                            id={`reply-${doubt.id}`} 
+                            value={replyText} 
+                            onChange={(e) => setReplyText(e.target.value)} 
+                            placeholder={linkUrl ? `Text for link: ${linkUrl}` : "Type your reply..."}
+                            rows={1}
+                            className="pr-28 resize-none"
+                            disabled={isReplying || doubt.isCleared} 
+                        />
+                        <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                            <EmojiPicker onEmojiSelect={(emoji) => setReplyText(replyText + emoji)} />
+                            <AddLinkDialog onLinkAdd={setLinkUrl} />
+                        </div>
+                        <Button 
+                            onClick={handleReply} 
+                            disabled={!replyText || isReplying || doubt.isCleared} 
+                            size="icon"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                        >
+                            {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
+                            <span className="sr-only">Send Reply</span>
+                        </Button>
                     </div>
-                    <Button 
-                        onClick={handleReply} 
-                        disabled={!replyText || isReplying || doubt.isCleared} 
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                    >
-                        {isReplying ? <Loader2 className="h-4 w-4 animate-spin"/> : <Reply className="h-4 w-4"/>}
-                        <span className="sr-only">Send Reply</span>
-                    </Button>
                 </div>
 
 
@@ -526,4 +579,3 @@ export default function DoubtCentre() {
     
 
     
-

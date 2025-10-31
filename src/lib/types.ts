@@ -1,5 +1,4 @@
 
-
 import { DocumentData, Timestamp } from 'firebase/firestore';
 export type AccessLevel = 'full' | 'limited';
 
@@ -163,6 +162,8 @@ export interface DoubtMessage extends DocumentData {
     createdAt: Timestamp;
     mediaUrl?: string;
     mediaType?: 'image' | 'link';
+    replyingToId?: string;
+    replyingToText?: string;
 }
 
 export interface Doubt extends DocumentData {
