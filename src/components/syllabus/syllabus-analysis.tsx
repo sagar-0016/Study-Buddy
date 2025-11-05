@@ -122,7 +122,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                    )}
+                                      )}
                                 </div>
                                 <p className="text-sm text-muted-foreground">{topic.unit}</p>
                             </div>
@@ -135,7 +135,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                                         </Button>
                                     </SuggestChangeDialog>
                                 )}
-                                {topic.details && (
+                                {topic.details && examType === 'jeeMain' && (
                                      <CollapsibleTrigger asChild>
                                         <Button variant="ghost" size="icon" className="group">
                                             <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
@@ -144,7 +144,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                                 )}
                             </div>
                         </div>
-                        {topic.details && (
+                        {topic.details && examType === 'jeeMain' && (
                              <CollapsibleContent>
                                 <div className="px-4 pb-4">
                                     <div className="p-3 bg-muted/50 rounded-md border-l-2 border-primary">
