@@ -14,7 +14,8 @@
     "populate-flashcards": "tsx ./scripts/populateFlashcards.ts",
     "populate-messages": "tsx ./scripts/populateMessages.ts",
     "populate-features": "tsx ./scripts/populateFeatures.ts",
-    "populate-worried-streak": "tsx ./scripts/populateWorriedStreakMessages.ts"
+    "populate-worried-streak": "tsx ./scripts/populateWorriedStreakMessages.ts",
+    "populate-syllabus": "tsx ./scripts/populateSyllabus.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
