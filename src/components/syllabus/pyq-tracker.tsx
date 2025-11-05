@@ -12,11 +12,13 @@ import {
 } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import type { Subject, Chapter, Syllabus } from '@/lib/types';
+import type { Subject, Chapter, Syllabus, SyllabusChapter } from '@/lib/types';
 import { getPyqProgress, updatePyqStatus } from '@/lib/pyq';
 import { getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -62,15 +64,28 @@ function SubjectPyqTracker({ subject, examType }: { subject: Subject, examType: 
                                 {chapter.topics.map(topic => { 
                                     const pyqKey = `${subject.label}-${chapter.title}-${topic.name}`;
                                     return (
-                                        <div key={pyqKey} className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors">
+                                        <div key={pyqKey} className={cn("flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors", topic.isOutOfSyllabus && "opacity-60")}>
                                             <Checkbox
                                                 id={`${pyqKey}-${examType}`}
                                                 checked={checkedState[pyqKey] || false}
                                                 onCheckedChange={(checked) => handleCheckboxChange(pyqKey, !!checked)}
+                                                disabled={topic.isOutOfSyllabus}
                                             />
-                                            <Label htmlFor={`${pyqKey}-${examType}`} className="w-full font-normal cursor-pointer">
+                                            <Label htmlFor={`${pyqKey}-${examType}`} className={cn("w-full font-normal", topic.isOutOfSyllabus ? "cursor-not-allowed" : "cursor-pointer")}>
                                                 {topic.name}
                                             </Label>
+                                            {topic.isOutOfSyllabus && (
+                                                <TooltipProvider>
+                                                  <Tooltip>
+                                                    <TooltipTrigger>
+                                                      <AlertCircle className="h-4 w-4 text-destructive" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <p>PYQs for this topic may not be relevant.</p>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
+                                              )}
                                         </div>
                                     );
                                 })}

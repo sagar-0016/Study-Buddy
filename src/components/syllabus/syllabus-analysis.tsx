@@ -18,10 +18,12 @@ import { Label } from '@/components/ui/label';
 import type { Subject, SyllabusChapter, Syllabus } from '@/lib/types';
 import { getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Send, Pencil, Edit, AlertTriangle } from 'lucide-react';
+import { Send, Pencil, Edit, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { PriorityLegend } from './priority-legend';
 import { PriorityDot } from './priority-dot';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -101,9 +103,23 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
         
         <div className="space-y-3">
             {filteredAndSortedTopics.map(topic => (
-                <Card key={topic.name} className="flex items-center justify-between p-4">
+                <Card key={topic.name} className={cn("flex items-center justify-between p-4", topic.isOutOfSyllabus && "bg-muted/50")}>
                     <div className="flex-1">
-                        <p className="font-semibold">{topic.name}</p>
+                        <div className="flex items-center gap-2">
+                           <p className="font-semibold">{topic.name}</p>
+                            {topic.isOutOfSyllabus && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <AlertCircle className="h-4 w-4 text-destructive" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This topic is not in the official JEE Mains 2024 syllabus.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
                         <p className="text-sm text-muted-foreground">{topic.unit}</p>
                     </div>
                     <div className="flex items-center gap-4">

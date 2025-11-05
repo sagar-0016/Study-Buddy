@@ -12,6 +12,7 @@ export type SyllabusChapter = {
     name: string;
     jeeMainWeightage: number;
     jeeAdvancedWeightage: number;
+    isOutOfSyllabus?: boolean;
 }
 
 export type Chapter = {

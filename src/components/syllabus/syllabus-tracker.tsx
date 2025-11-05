@@ -17,8 +17,9 @@ import { Progress } from '@/components/ui/progress';
 import type { Subject, Chapter, SyllabusChapter, Syllabus } from '@/lib/types';
 import { listenToSyllabusProgress, updateSyllabusTopicStatus, getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, AreaChart, AlertTriangle } from 'lucide-react';
+import { ClipboardCheck, AreaChart, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function SubjectSyllabus({ subject }: { subject: Subject }) {
   const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
@@ -112,6 +113,18 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
                       <Label htmlFor={topicKey} className="w-full font-normal cursor-pointer">
                         {topic.name}
                       </Label>
+                      {topic.isOutOfSyllabus && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <AlertCircle className="h-4 w-4 text-destructive" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>This topic is not in the official JEE Mains 2024 syllabus.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                   );
                 })}
