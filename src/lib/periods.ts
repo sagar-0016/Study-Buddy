@@ -64,9 +64,9 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
         throw new Error("Current period data not found.");
     }
     const currentPeriodData = currentPeriodSnap.data() as PeriodData;
-    const actualStartDate = currentPeriodData.actualStartDate;
-    const expectedDate = currentPeriodData.expectedDate;
-    const certainDate = currentPeriodData.certainDate;
+    const actualStartDate = currentPeriodData.actualStartDate ? (currentPeriodData.actualStartDate as Timestamp).toDate() : null;
+    const expectedDate = currentPeriodData.expectedDate ? (currentPeriodData.expectedDate as Timestamp).toDate() : null;
+    const certainDate = currentPeriodData.certainDate ? (currentPeriodData.certainDate as Timestamp).toDate() : null;
 
     if (!actualStartDate) {
         throw new Error("Cannot log end date without a start date.");
@@ -84,10 +84,14 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
         loggedAt: serverTimestamp()
     });
 
-    // 2. Reset the 'current' period document for the next cycle
+    // 2. Calculate the next expected date based on the start date of the cycle that just ended
+    const nextExpectedDate = add(actualStartDate, { days: AVERAGE_CYCLE_LENGTH });
+    const nextCertainDate = add(nextExpectedDate, { days: 2 });
+
+    // 3. Reset the 'current' period document for the next cycle
     await setDoc(periodRef, {
-        expectedDate: null,
-        certainDate: null,
+        expectedDate: Timestamp.fromDate(nextExpectedDate),
+        certainDate: Timestamp.fromDate(nextCertainDate),
         actualStartDate: null,
         actualEndDate: null,
     });
