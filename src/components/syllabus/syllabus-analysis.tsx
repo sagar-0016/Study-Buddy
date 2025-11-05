@@ -48,7 +48,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
 
   const filteredAndSortedTopics = useMemo(() => {
     let topics: TopicWithUnit[] = [...allTopicsWithUnit];
-    const weightageKey = examType === 'jeeMain' ? 'jeeMainsWeightage' : 'jeeAdvancedWeightage';
+    const weightageKey = examType === 'jeeMain' ? 'jeeMainWeightage' : 'jeeAdvancedWeightage';
 
     if (filter !== 'all') {
       topics = topics.filter(c => c[weightageKey] === parseInt(filter));
@@ -65,7 +65,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
     return topics;
   }, [allTopicsWithUnit, filter, sort, examType]);
 
-  const weightageKey = examType === 'jeeMain' ? 'jeeMainsWeightage' : 'jeeAdvancedWeightage';
+  const weightageKey = examType === 'jeeMain' ? 'jeeMainWeightage' : 'jeeAdvancedWeightage';
 
   return (
     <div className="space-y-6">
