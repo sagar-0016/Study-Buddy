@@ -68,8 +68,14 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
   const weightageKey = examType === 'jeeMain' ? 'jeeMainWeightage' : 'jeeAdvancedWeightage';
 
   const TopicItem = ({ topic }: { topic: TopicWithUnit }) => {
+    const [isHovering, setIsHovering] = useState(false);
+
     const topicContent = (
-      <div className="flex-1">
+      <div 
+        className="flex-1"
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
         <div className="flex items-center gap-2">
           <p className="font-semibold">{topic.name}</p>
           {topic.isOutOfSyllabus && examType === 'jeeMain' && (
@@ -92,20 +98,22 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
     return (
       <Card className={cn("transition-colors", topic.isOutOfSyllabus && examType === 'jeeMain' && "bg-muted/50")}>
           <div className="flex items-center justify-between p-4">
-              {topic.details && examType === 'jeeMain' ? (
-                  <Popover>
-                      <PopoverTrigger asChild>
-                          <div className="cursor-pointer">{topicContent}</div>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 max-h-80 overflow-y-auto" side="bottom" align="start">
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                              <p className="whitespace-pre-wrap">{topic.details}</p>
-                          </div>
-                      </PopoverContent>
-                  </Popover>
-              ) : (
-                  topicContent
-              )}
+              <Popover open={isHovering} onOpenChange={setIsHovering}>
+                <PopoverTrigger asChild>
+                  <div className="cursor-default">{topicContent}</div>
+                </PopoverTrigger>
+                {topic.details && examType === 'jeeMain' && (
+                  <PopoverContent 
+                    side="bottom" 
+                    align="start"
+                    className="w-80 max-h-80 overflow-y-auto bg-popover/80 backdrop-blur-lg"
+                  >
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <p className="whitespace-pre-wrap">{topic.details}</p>
+                    </div>
+                  </PopoverContent>
+                )}
+              </Popover>
               
               <div className="flex items-center gap-4 pl-4">
                   <PriorityDot priority={topic[weightageKey]} />
