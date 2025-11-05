@@ -110,7 +110,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                         <div className="flex items-center justify-between p-4">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                <p className="font-semibold">{topic.name}</p>
+                                    <p className="font-semibold">{topic.name}</p>
                                     {topic.isOutOfSyllabus && examType === 'jeeMain' && (
                                         <TooltipProvider>
                                             <Tooltip>
