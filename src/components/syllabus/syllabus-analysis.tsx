@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -18,12 +19,13 @@ import { Label } from '@/components/ui/label';
 import type { Subject, SyllabusChapter, Syllabus } from '@/lib/types';
 import { getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Send, Pencil, Edit, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Send, Pencil, Edit, AlertTriangle, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { PriorityLegend } from './priority-legend';
 import { PriorityDot } from './priority-dot';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -103,36 +105,56 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
         
         <div className="space-y-3">
             {filteredAndSortedTopics.map(topic => (
-                <Card key={topic.name} className={cn("flex items-center justify-between p-4", topic.isOutOfSyllabus && "bg-muted/50")}>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                           <p className="font-semibold">{topic.name}</p>
-                            {topic.isOutOfSyllabus && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <AlertCircle className="h-4 w-4 text-destructive" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>This topic is not in the official JEE Mains 2024 syllabus.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
+                <Collapsible key={topic.name} asChild>
+                    <Card className={cn("transition-colors", topic.isOutOfSyllabus && "bg-muted/50")}>
+                        <div className="flex items-center justify-between p-4">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                <p className="font-semibold">{topic.name}</p>
+                                    {topic.isOutOfSyllabus && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <AlertCircle className="h-4 w-4 text-destructive" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>This topic is not in the official JEE Mains 2024 syllabus.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">{topic.unit}</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <PriorityDot priority={topic[weightageKey]} />
+                                {isSuggestMode && (
+                                    <SuggestChangeDialog topic={topic}>
+                                        <Button variant="ghost" size="icon">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </SuggestChangeDialog>
+                                )}
+                                {topic.details && (
+                                     <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="group">
+                                            <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                )}
+                            </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{topic.unit}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <PriorityDot priority={topic[weightageKey]} />
-                         {isSuggestMode && (
-                            <SuggestChangeDialog topic={topic}>
-                                <Button variant="ghost" size="icon">
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            </SuggestChangeDialog>
-                         )}
-                    </div>
-                </Card>
+                        {topic.details && (
+                             <CollapsibleContent>
+                                <div className="px-4 pb-4">
+                                    <div className="p-3 bg-muted/50 rounded-md border-l-2 border-primary">
+                                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{topic.details}</p>
+                                    </div>
+                                </div>
+                            </CollapsibleContent>
+                        )}
+                    </Card>
+                </Collapsible>
             ))}
         </div>
         

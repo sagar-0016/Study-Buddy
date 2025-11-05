@@ -1,4 +1,5 @@
 
+
 import { DocumentData, Timestamp } from 'firebase/firestore';
 export type AccessLevel = 'full' | 'limited';
 
@@ -13,6 +14,7 @@ export type SyllabusChapter = {
     jeeMainWeightage: number;
     jeeAdvancedWeightage: number;
     isOutOfSyllabus?: boolean;
+    details?: string;
 }
 
 export type Chapter = {
