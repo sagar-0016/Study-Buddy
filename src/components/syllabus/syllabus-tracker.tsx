@@ -120,7 +120,7 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
                               <AlertCircle className="h-4 w-4 text-destructive" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>This topic is not in the official JEE Mains 2024 syllabus.</p>
+                              <p>This topic is not in the official JEE Mains syllabus.</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>

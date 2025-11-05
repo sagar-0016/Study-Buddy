@@ -48,7 +48,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
 
   const filteredAndSortedTopics = useMemo(() => {
     let topics: TopicWithUnit[] = [...allTopicsWithUnit];
-    const weightageKey = examType === 'jeeMain' ? 'jeeMainWeightage' : 'jeeAdvancedWeightage';
+    const weightageKey = examType === 'jeeMain' ? 'jeeMainsWeightage' : 'jeeAdvancedWeightage';
 
     if (filter !== 'all') {
       topics = topics.filter(c => c[weightageKey] === parseInt(filter));
@@ -65,7 +65,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
     return topics;
   }, [allTopicsWithUnit, filter, sort, examType]);
 
-  const weightageKey = examType === 'jeeMain' ? 'jeeMainWeightage' : 'jeeAdvancedWeightage';
+  const weightageKey = examType === 'jeeMain' ? 'jeeMainsWeightage' : 'jeeAdvancedWeightage';
 
   return (
     <div className="space-y-6">
@@ -106,19 +106,19 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
         <div className="space-y-3">
             {filteredAndSortedTopics.map(topic => (
                 <Collapsible key={topic.name} asChild>
-                    <Card className={cn("transition-colors", topic.isOutOfSyllabus && "bg-muted/50")}>
+                    <Card className={cn("transition-colors", topic.isOutOfSyllabus && examType === 'jeeMain' && "bg-muted/50")}>
                         <div className="flex items-center justify-between p-4">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                 <p className="font-semibold">{topic.name}</p>
-                                    {topic.isOutOfSyllabus && (
+                                    {topic.isOutOfSyllabus && examType === 'jeeMain' && (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger>
                                                     <AlertCircle className="h-4 w-4 text-destructive" />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>This topic is not in the official JEE Mains 2024 syllabus.</p>
+                                                    <p>This topic is not in the official JEE Mains syllabus.</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
