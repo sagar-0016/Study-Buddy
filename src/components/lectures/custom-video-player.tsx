@@ -18,6 +18,11 @@ import {
     DropdownMenuRadioItem,
     DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
+import { 
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import type { LectureNote } from '@/lib/types';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -258,10 +263,10 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         }
     };
 
-    const handlePlaybackRateChange = (rate: number) => {
+    const handlePlaybackRateChange = (newRate: number) => {
         if (videoRef.current) {
-            videoRef.current.playbackRate = rate;
-            setPlaybackRate(rate);
+            videoRef.current.playbackRate = newRate;
+            setPlaybackRate(newRate);
         }
     };
 
@@ -484,22 +489,20 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                         />
                     </div>
                     
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="font-mono">{playbackRate}x</Button>
-                        </DropdownMenuTrigger>
-                         <DropdownMenuPortal container={playerRef.current ?? undefined}>
-                            <DropdownMenuContent>
-                                <DropdownMenuLabel>Playback Speed</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
-                                    <DropdownMenuItem key={rate} onSelect={() => handlePlaybackRateChange(rate)}>
-                                        {rate}x
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenuPortal>
-                    </DropdownMenu>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className="font-mono w-20">{playbackRate.toFixed(1)}x</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-2" side="top" align="center">
+                             <Slider
+                                value={[playbackRate]}
+                                onValueChange={(value) => handlePlaybackRateChange(value[0])}
+                                min={0.1}
+                                max={4}
+                                step={0.1}
+                            />
+                        </PopoverContent>
+                    </Popover>
 
                      {sdSrc && (
                          <DropdownMenu>
