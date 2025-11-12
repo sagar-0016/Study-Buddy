@@ -1,7 +1,8 @@
 
+
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getLectureById } from '@/lib/lecture-data';
+import { getLectureById } from '@/lib/lectures';
 import LectureView from '@/components/lectures/lecture-view';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ export default async function LecturePage({ params }: LecturePageProps) {
   const lecture: Lecture = {
     ...lectureData,
     id: lectureData.id,
-    createdAt: lectureData.createdAt?.toDate().toISOString(), // Convert Timestamp to ISO string
+    createdAt: lectureData.createdAt?.toString(), // Convert Timestamp to string
   };
 
 
