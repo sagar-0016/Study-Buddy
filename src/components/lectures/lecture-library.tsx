@@ -266,24 +266,29 @@ export default function LectureLibrary() {
   }, [allContent]);
 
   const filteredContent = useMemo(() => {
-    if (!searchTerm) return [...categories, ...videos.filter(v => !v.categoryId)];
     const lowercasedTerm = searchTerm.toLowerCase();
     
+    // Always include categories in the search results
     const filteredCategories = categories.filter(cat => 
         cat.title.toLowerCase().includes(lowercasedTerm) ||
         cat.description.toLowerCase().includes(lowercasedTerm)
     );
 
-    const filteredVideos = videos.filter(vid => 
-        !vid.categoryId && (
+    // Filter videos that are not in any category
+    const uncategorizedVideos = videos.filter(vid => !vid.categoryId);
+    
+    // If there's a search term, filter the uncategorized videos
+    const filteredUncategorizedVideos = searchTerm 
+        ? uncategorizedVideos.filter(vid => 
             vid.title.toLowerCase().includes(lowercasedTerm) ||
             vid.description.toLowerCase().includes(lowercasedTerm) ||
             vid.subject.toLowerCase().includes(lowercasedTerm) ||
             vid.channel.toLowerCase().includes(lowercasedTerm)
-        )
-    );
+          )
+        : uncategorizedVideos; // Otherwise, show all uncategorized videos
 
-    return [...filteredCategories, ...filteredVideos];
+    // Combine categories and the filtered uncategorized videos
+    return [...filteredCategories, ...filteredUncategorizedVideos];
   }, [videos, categories, searchTerm]);
 
   if (isLoading) {
