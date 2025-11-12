@@ -259,8 +259,12 @@ export default function LectureLibrary() {
       const videos: LectureVideo[] = [];
       const categories: LectureCategory[] = [];
       allContent.forEach(item => {
-          if (item.type === 'video') videos.push(item);
-          if (item.type === 'category') categories.push(item);
+        // A lecture is a video if its type is 'video' OR if the type field does not exist (for backward compatibility)
+        if (item.type === 'video' || !item.type) {
+            videos.push(item as LectureVideo);
+        } else if (item.type === 'category') {
+            categories.push(item as LectureCategory);
+        }
       });
       return { videos, categories };
   }, [allContent]);
@@ -268,26 +272,28 @@ export default function LectureLibrary() {
   const filteredContent = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
     
-    // Always include categories in the search results
-    const filteredCategories = categories.filter(cat => 
-        cat.title.toLowerCase().includes(lowercasedTerm) ||
-        cat.description.toLowerCase().includes(lowercasedTerm)
-    );
+    // Filter categories based on search term
+    const filteredCategories = searchTerm 
+        ? categories.filter(cat => 
+            cat.title.toLowerCase().includes(lowercasedTerm) ||
+            (cat.description && cat.description.toLowerCase().includes(lowercasedTerm))
+          )
+        : categories;
 
     // Filter videos that are not in any category
     const uncategorizedVideos = videos.filter(vid => !vid.categoryId);
     
-    // If there's a search term, filter the uncategorized videos
+    // If there's a search term, filter the uncategorized videos as well
     const filteredUncategorizedVideos = searchTerm 
         ? uncategorizedVideos.filter(vid => 
             vid.title.toLowerCase().includes(lowercasedTerm) ||
-            vid.description.toLowerCase().includes(lowercasedTerm) ||
+            (vid.description && vid.description.toLowerCase().includes(lowercasedTerm)) ||
             vid.subject.toLowerCase().includes(lowercasedTerm) ||
             vid.channel.toLowerCase().includes(lowercasedTerm)
           )
         : uncategorizedVideos; // Otherwise, show all uncategorized videos
 
-    // Combine categories and the filtered uncategorized videos
+    // Combine the filtered categories and filtered uncategorized videos
     return [...filteredCategories, ...filteredUncategorizedVideos];
   }, [videos, categories, searchTerm]);
 
@@ -329,10 +335,10 @@ export default function LectureLibrary() {
       {filteredContent.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredContent.map(item =>
-             item.type === 'video' ? (
-                <VideoCard key={item.id} lecture={item} />
+             item.type === 'category' ? (
+                <CategoryCard key={item.id} category={item as LectureCategory} lectures={videos} onVideosAdded={fetchLectures} />
              ) : (
-                <CategoryCard key={item.id} category={item} lectures={videos} onVideosAdded={fetchLectures} />
+                <VideoCard key={item.id} lecture={item as LectureVideo} />
              )
           )}
         </div>
