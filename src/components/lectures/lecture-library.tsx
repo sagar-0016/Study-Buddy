@@ -1,18 +1,25 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getLectures } from '@/lib/lecture-data';
-import type { Lecture } from '@/lib/types';
+import { getLectures, createLectureCategory, addLecturesToCategory } from '@/lib/lectures';
+import type { Lecture, LectureVideo, LectureCategory } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Clapperboard, Play, Ban } from 'lucide-react';
+import { Search, Clapperboard, Play, Folder, Plus, Check, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { ScrollArea } from '../ui/scroll-area';
 
-const LectureCard = ({ lecture }: { lecture: Lecture }) => {
+const VideoCard = ({ lecture }: { lecture: LectureVideo }) => {
   return (
     <Link href={`/lectures/${lecture.id}`} className="block group">
         <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
@@ -44,45 +51,247 @@ const LectureCard = ({ lecture }: { lecture: Lecture }) => {
   );
 };
 
+const AddVideosToCategoryDialog = ({ category, lectures, onVideosAdded }: { category: LectureCategory, lectures: LectureVideo[], onVideosAdded: () => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedLectures, setSelectedLectures] = useState<string[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const { toast } = useToast();
+
+    const uncategorizedLectures = useMemo(() => {
+        return lectures.filter(lecture => !lecture.categoryId);
+    }, [lectures]);
+    
+    const filteredLectures = useMemo(() => {
+        if (!searchTerm) return uncategorizedLectures;
+        const lowercasedTerm = searchTerm.toLowerCase();
+        return uncategorizedLectures.filter(lecture => 
+            lecture.title.toLowerCase().includes(lowercasedTerm) ||
+            lecture.description.toLowerCase().includes(lowercasedTerm)
+        );
+    }, [uncategorizedLectures, searchTerm]);
+
+    const handleToggleSelection = (lectureId: string) => {
+        setSelectedLectures(prev => 
+            prev.includes(lectureId) ? prev.filter(id => id !== lectureId) : [...prev, lectureId]
+        );
+    };
+
+    const handleAddVideos = async () => {
+        if (selectedLectures.length === 0) return;
+        setIsSaving(true);
+        try {
+            const lecturesToAdd = lectures.filter(l => selectedLectures.includes(l.id));
+            await addLecturesToCategory(category.id, lecturesToAdd);
+            toast({ title: "Success", description: `${selectedLectures.length} video(s) added to category.` });
+            setSelectedLectures([]);
+            setSearchTerm('');
+            onVideosAdded();
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Error adding lectures to category:", error);
+            toast({ title: "Error", description: "Could not add videos to the category.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                 <Button size="sm" className="w-full">
+                    <Plus className="mr-2 h-4 w-4" /> Add Videos
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl flex flex-col h-[80vh]">
+                <DialogHeader>
+                    <DialogTitle>Add Videos to "{category.title}"</DialogTitle>
+                    <DialogDescription>Select videos to include in this category. Only uncategorized videos are shown.</DialogDescription>
+                </DialogHeader>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search uncategorized videos..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+                <ScrollArea className="flex-grow border rounded-md">
+                    <div className="p-4 space-y-2">
+                        {filteredLectures.length > 0 ? filteredLectures.map(lecture => (
+                            <div key={lecture.id} onClick={() => handleToggleSelection(lecture.id)} className="flex items-center gap-4 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors">
+                                <div className="relative w-24 h-14 rounded overflow-hidden flex-shrink-0">
+                                    <Image src={lecture.thumbnailUrl} alt={lecture.title} fill className="object-cover" />
+                                    {selectedLectures.includes(lecture.id) && (
+                                        <div className="absolute inset-0 bg-primary/70 flex items-center justify-center">
+                                            <Check className="h-8 w-8 text-primary-foreground" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-grow">
+                                    <p className="font-semibold line-clamp-1">{lecture.title}</p>
+                                    <p className="text-sm text-muted-foreground line-clamp-1">{lecture.channel}</p>
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="text-center text-muted-foreground py-8">No more uncategorized videos available.</p>
+                        )}
+                    </div>
+                </ScrollArea>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddVideos} disabled={isSaving || selectedLectures.length === 0}>
+                        {isSaving ? <Loader2 className="animate-spin" /> : `Add ${selectedLectures.length} Video(s)`}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
+const CategoryCard = ({ category, lectures, onVideosAdded }: { category: LectureCategory, lectures: LectureVideo[], onVideosAdded: () => void }) => {
+    return (
+         <Card className="overflow-hidden transition-all duration-300 h-full flex flex-col border-0">
+            <Link href={`/lectures/category/${category.id}`} className="block group flex-grow">
+                <div className="relative aspect-video bg-muted/30 flex items-center justify-center">
+                    {category.thumbnailUrl ? (
+                         <Image 
+                            src={category.thumbnailUrl} 
+                            alt={`Thumbnail for ${category.title}`} 
+                            fill 
+                            className="object-cover group-hover:scale-105 transition-transform"
+                        />
+                    ) : (
+                        <Folder className="h-16 w-16 text-muted-foreground" />
+                    )}
+                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+                </div>
+                <CardContent className="p-4 flex-grow">
+                    <h3 className="font-semibold text-base line-clamp-2">{category.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2 whitespace-pre-wrap">{category.description}</p>
+                </CardContent>
+            </Link>
+            <CardFooter className="p-2 pt-0 flex-col gap-2">
+                 <p className="text-xs text-muted-foreground font-medium w-full text-center">{category.lectureIds?.length || 0} video(s)</p>
+                 <AddVideosToCategoryDialog category={category} lectures={lectures} onVideosAdded={onVideosAdded} />
+            </CardFooter>
+        </Card>
+    )
+}
+
+const CreateCategoryDialog = ({ onCategoryCreated }: { onCategoryCreated: () => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleCreateCategory = async () => {
+        if (!title) return;
+        setIsSaving(true);
+        try {
+            await createLectureCategory(title, description);
+            toast({ title: "Success!", description: `Category "${title}" created.` });
+            setTitle('');
+            setDescription('');
+            onCategoryCreated();
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Error creating category:", error);
+            toast({ title: "Error", description: "Could not create the category.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <Plus className="mr-2 h-4 w-4" /> Create Category
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Create a New Category</DialogTitle>
+                    <DialogDescription>Group your lectures into categories for better organization.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Category Title</Label>
+                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Advanced Mechanics" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Description (Optional)</Label>
+                        <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A short description of this category." />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleCreateCategory} disabled={!title || isSaving}>
+                        {isSaving ? <Loader2 className="animate-spin" /> : "Create"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export default function LectureLibrary() {
-  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [allContent, setAllContent] = useState<Lecture[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [accessLevel, setAccessLevel] = useState<string | null>(null);
 
+  const fetchLectures = async () => {
+    setIsLoading(true);
+    const fetchedContent = await getLectures();
+    setAllContent(fetchedContent);
+    setIsLoading(false);
+  };
+  
   useEffect(() => {
-    const level = localStorage.getItem('study-buddy-access-level');
-    setAccessLevel(level);
-
-    if (level === 'full') {
-      const fetchLectures = async () => {
-        setIsLoading(true);
-        const fetchedLectures = await getLectures();
-        setLectures(fetchedLectures);
-        setIsLoading(false);
-      };
-      fetchLectures();
-    } else {
-      setIsLoading(false);
-    }
+    fetchLectures();
   }, []);
 
-  const filteredLectures = useMemo(() => {
-    if (!searchTerm) return lectures;
+  const { videos, categories } = useMemo(() => {
+      const videos: LectureVideo[] = [];
+      const categories: LectureCategory[] = [];
+      allContent.forEach(item => {
+          if (item.type === 'video') videos.push(item);
+          if (item.type === 'category') categories.push(item);
+      });
+      return { videos, categories };
+  }, [allContent]);
+
+  const filteredContent = useMemo(() => {
+    if (!searchTerm) return [...categories, ...videos.filter(v => !v.categoryId)];
     const lowercasedTerm = searchTerm.toLowerCase();
-    return lectures.filter(lecture => 
-      lecture.title.toLowerCase().includes(lowercasedTerm) ||
-      lecture.description.toLowerCase().includes(lowercasedTerm) ||
-      lecture.subject.toLowerCase().includes(lowercasedTerm) ||
-      lecture.channel.toLowerCase().includes(lowercasedTerm)
+    
+    const filteredCategories = categories.filter(cat => 
+        cat.title.toLowerCase().includes(lowercasedTerm) ||
+        cat.description.toLowerCase().includes(lowercasedTerm)
     );
-  }, [lectures, searchTerm]);
+
+    const filteredVideos = videos.filter(vid => 
+        !vid.categoryId && (
+            vid.title.toLowerCase().includes(lowercasedTerm) ||
+            vid.description.toLowerCase().includes(lowercasedTerm) ||
+            vid.subject.toLowerCase().includes(lowercasedTerm) ||
+            vid.channel.toLowerCase().includes(lowercasedTerm)
+        )
+    );
+
+    return [...filteredCategories, ...filteredVideos];
+  }, [videos, categories, searchTerm]);
 
   if (isLoading) {
     return (
         <div className="space-y-6">
              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
                 <Skeleton className="h-10 w-full sm:flex-1" />
+                <Skeleton className="h-10 w-36" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
@@ -97,35 +306,30 @@ export default function LectureLibrary() {
     );
   }
 
-  if (accessLevel !== 'full') {
-    return (
-        <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">
-            <Ban className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">Access Denied</h3>
-            <p className="text-muted-foreground">This feature is available for authorized users only.</p>
-        </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div className="relative w-full sm:flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
-                placeholder="Search for lectures by title, subject, or channel..."
+                placeholder="Search lectures or categories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
             />
         </div>
+        <CreateCategoryDialog onCategoryCreated={fetchLectures} />
       </div>
 
-      {filteredLectures.length > 0 ? (
+      {filteredContent.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredLectures.map(lecture => (
-            <LectureCard key={lecture.id} lecture={lecture} />
-          ))}
+          {filteredContent.map(item =>
+             item.type === 'video' ? (
+                <VideoCard key={item.id} lecture={item} />
+             ) : (
+                <CategoryCard key={item.id} category={item} lectures={videos} onVideosAdded={fetchLectures} />
+             )
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">

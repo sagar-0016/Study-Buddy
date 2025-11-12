@@ -10,6 +10,10 @@ import {
   serverTimestamp,
   doc,
   deleteDoc,
+  writeBatch,
+  arrayUnion,
+  arrayRemove,
+  updateDoc,
 } from 'firebase/firestore';
 import {
   ref,
@@ -17,7 +21,7 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import type { LectureNote, LectureFeedback } from './types';
+import type { LectureNote, LectureFeedback, LectureCategory, LectureVideo } from './types';
 
 
 /**
@@ -136,4 +140,106 @@ export const addLectureFeedback = async (
     console.error(`Error adding feedback for lecture ${lectureId}:`, error);
     throw error;
   }
+};
+
+
+/**
+ * Creates a new lecture category document in Firestore.
+ * @param {string} title - The title of the category.
+ * @param {string} description - The description for the category.
+ * @returns {Promise<string>} The ID of the newly created category document.
+ */
+export const createLectureCategory = async (title: string, description: string): Promise<string> => {
+    const categoryData: Omit<LectureCategory, 'id'> = {
+        title,
+        description,
+        type: 'category',
+        lectureIds: [],
+        createdAt: serverTimestamp().toString(),
+    };
+    const docRef = await addDoc(collection(db, 'lectures'), categoryData);
+    return docRef.id;
+};
+
+
+/**
+ * Adds multiple lectures to a category. This involves updating the category's lectureIds array
+ * and updating the categoryId field on each lecture document.
+ * @param {string} categoryId - The ID of the category to add lectures to.
+ * @param {LectureVideo[]} lecturesToAdd - An array of lecture video objects to be added.
+ */
+export const addLecturesToCategory = async (categoryId: string, lecturesToAdd: LectureVideo[]): Promise<void> => {
+    const batch = writeBatch(db);
+    const categoryRef = doc(db, 'lectures', categoryId);
+
+    // Prepare lecture IDs and update thumbnail if needed
+    const lectureIds = lecturesToAdd.map(lecture => lecture.id);
+    const categoryUpdate: Partial<LectureCategory> = {
+        lectureIds: arrayUnion(...lectureIds) as any, // Use arrayUnion to add without duplicates
+    };
+    
+    // Set category thumbnail to the first video's thumbnail if the category is empty
+    if (lecturesToAdd.length > 0) {
+        categoryUpdate.thumbnailUrl = lecturesToAdd[0].thumbnailUrl;
+    }
+    
+    batch.update(categoryRef, categoryUpdate);
+
+    // Update each lecture to set its categoryId
+    lecturesToAdd.forEach(lecture => {
+        const lectureRef = doc(db, 'lectures', lecture.id);
+        batch.update(lectureRef, { categoryId: categoryId });
+    });
+
+    await batch.commit();
+};
+
+
+/**
+ * Removes a lecture from a category. This updates both the category and lecture documents.
+ * @param {string} categoryId - The ID of the category.
+ * @param {string} lectureId - The ID of the lecture to remove.
+ */
+export const removeLectureFromCategory = async (categoryId: string, lectureId: string): Promise<void> => {
+    const batch = writeBatch(db);
+    const categoryRef = doc(db, 'lectures', categoryId);
+    const lectureRef = doc(db, 'lectures', lectureId);
+
+    // Remove lectureId from category's array
+    batch.update(categoryRef, {
+        lectureIds: arrayRemove(lectureId)
+    });
+
+    // Remove categoryId from the lecture
+    batch.update(lectureRef, {
+        categoryId: "" // Or deleteField() if you prefer
+    });
+
+    await batch.commit();
+};
+
+
+/**
+ * Fetches all lectures belonging to a specific category.
+ * @param {LectureCategory} category - The category object containing lectureIds.
+ * @returns {Promise<LectureVideo[]>} An array of lecture video objects.
+ */
+export const getLecturesForCategory = async (category: LectureCategory): Promise<LectureVideo[]> => {
+    if (!category.lectureIds || category.lectureIds.length === 0) {
+        return [];
+    }
+
+    try {
+        const allLecturesSnapshot = await getDocs(collection(db, 'lectures'));
+        const allLecturesMap = new Map(allLecturesSnapshot.docs.map(d => [d.id, { id: d.id, ...d.data() } as LectureVideo]));
+        
+        const lecturesInCategory = category.lectureIds
+            .map(id => allLecturesMap.get(id))
+            .filter((lecture): lecture is LectureVideo => !!lecture && lecture.type === 'video');
+            
+        return lecturesInCategory;
+    } catch (error) {
+        console.error(`Error fetching lectures for category ${category.id}:`, error);
+        return [];
+    }
 };

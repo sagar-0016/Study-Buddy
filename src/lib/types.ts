@@ -11,7 +11,7 @@ export type NavLink = {
 
 export type SyllabusChapter = {
     name: string;
-    jeeMainWeightage: number;
+    jeeMainsWeightage: number;
     jeeAdvancedWeightage: number;
     isOutOfSyllabus?: boolean;
     details?: string;
@@ -131,18 +131,31 @@ export type PyqProgressWithTimestamp = PyqProgress & {
     lastUpdated: Timestamp;
 };
 
-export interface Lecture extends DocumentData {
+interface BaseLecture {
   id: string;
   title: string;
   description: string;
+  createdAt?: string;
+}
+
+export interface LectureVideo extends BaseLecture {
+  type: 'video';
   subject: 'Physics' | 'Chemistry' | 'Maths';
   videoUrl: string;
   sdVideoUrl?: string;
   thumbnailUrl: string;
   channel: string;
   duration: string;
-  createdAt?: string; // Changed from Timestamp
+  categoryId?: string;
 }
+
+export interface LectureCategory extends BaseLecture {
+    type: 'category';
+    lectureIds: string[];
+    thumbnailUrl?: string; // To be updated with the thumbnail of the first video
+}
+
+export type Lecture = LectureVideo | LectureCategory;
 
 export interface LectureNote extends DocumentData {
     id: string;

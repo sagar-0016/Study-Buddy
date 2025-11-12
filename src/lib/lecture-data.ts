@@ -1,16 +1,19 @@
 
+
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy } from 'firebase/firestore';
 import type { Lecture } from './types';
 
 /**
- * Fetches all lectures from the 'lectures' collection in Firestore.
- * @returns {Promise<Lecture[]>} An array of lecture objects.
+ * Fetches all lectures and categories from the 'lectures' collection in Firestore,
+ * sorted by creation date.
+ * @returns {Promise<Lecture[]>} An array of lecture objects (both videos and categories).
  */
 export const getLectures = async (): Promise<Lecture[]> => {
   try {
     const lecturesRef = collection(db, 'lectures');
-    const querySnapshot = await getDocs(lecturesRef);
+    const q = query(lecturesRef, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
       return [];
@@ -30,8 +33,8 @@ export const getLectures = async (): Promise<Lecture[]> => {
 };
 
 /**
- * Fetches a single lecture by its ID.
- * @param {string} lectureId - The ID of the lecture document.
+ * Fetches a single lecture or category by its ID.
+ * @param {string} lectureId - The ID of the document.
  * @returns {Promise<Lecture | null>} A lecture object or null if not found.
  */
 export const getLectureById = async (
