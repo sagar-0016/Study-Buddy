@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
@@ -99,8 +99,8 @@ const AddVideosToCategoryDialog = ({ category, lectures, onVideosAdded }: { cate
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                 <Button size="sm" className="w-full">
-                    <Plus className="mr-2 h-4 w-4" /> Add Videos
+                 <Button variant="secondary" size="icon" className="absolute bottom-2 right-2 h-8 w-8 rounded-full shadow-lg">
+                    <Plus className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl flex flex-col h-[80vh]">
@@ -153,7 +153,7 @@ const AddVideosToCategoryDialog = ({ category, lectures, onVideosAdded }: { cate
 
 const CategoryCard = ({ category, lectures, onVideosAdded }: { category: LectureCategory, lectures: LectureVideo[], onVideosAdded: () => void }) => {
     return (
-         <Card className="overflow-hidden transition-all duration-300 h-full flex flex-col border-0">
+         <Card className="overflow-hidden transition-all duration-300 h-full flex flex-col border-0 relative group/cat">
             <Link href={`/lectures/category/${category.id}`} className="block group flex-grow">
                 <div className="relative aspect-video bg-muted/30 flex items-center justify-center">
                     {category.thumbnailUrl ? (
@@ -175,8 +175,10 @@ const CategoryCard = ({ category, lectures, onVideosAdded }: { category: Lecture
             </Link>
             <CardFooter className="p-2 pt-0 flex-col gap-2">
                  <p className="text-xs text-muted-foreground font-medium w-full text-center">{category.lectureIds?.length || 0} video(s)</p>
-                 <AddVideosToCategoryDialog category={category} lectures={lectures} onVideosAdded={onVideosAdded} />
             </CardFooter>
+            <div className="opacity-0 group-hover/cat:opacity-100 transition-opacity">
+                <AddVideosToCategoryDialog category={category} lectures={lectures} onVideosAdded={onVideosAdded} />
+            </div>
         </Card>
     )
 }
