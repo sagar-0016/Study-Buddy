@@ -1,7 +1,4 @@
 
-
-'use client';
-
 import { db, storage } from './firebase';
 import {
   collection,
@@ -289,7 +286,7 @@ export const getLecturesForCategory = async (category: LectureCategory): Promise
         
         const lecturesInCategory = category.lectureIds
             .map(id => allLecturesMap.get(id))
-            .filter((lecture): lecture is LectureVideo => !!lecture && lecture.type === 'video');
+            .filter((lecture): lecture is LectureVideo => !!lecture && (lecture.type === 'video' || !lecture.type));
             
         return lecturesInCategory;
     } catch (error) {
