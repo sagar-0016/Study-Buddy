@@ -43,7 +43,7 @@ export default async function LecturePage({ params }: LecturePageProps) {
   const lecture: Lecture = {
     ...lectureData,
     id: lectureData.id,
-    createdAt: lectureData.createdAt?.toString(), // Convert Timestamp to string
+    createdAt: lectureData.createdAt ? lectureData.createdAt.toDate().toISOString() : undefined,
   };
 
 

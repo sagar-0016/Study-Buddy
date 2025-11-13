@@ -206,7 +206,7 @@ export const createLectureCategory = async (title: string, description: string):
         description,
         type: 'category',
         lectureIds: [],
-        createdAt: serverTimestamp().toString(),
+        createdAt: serverTimestamp(),
     };
     const docRef = await addDoc(collection(db, 'lectures'), categoryData);
     return docRef.id;
