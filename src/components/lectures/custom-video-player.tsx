@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback, MouseEvent } from 'react';
@@ -479,12 +478,12 @@ export default function CustomVideoPlayer({ lecture, notes }: CustomVideoPlayerP
              <div className={cn("absolute top-0 left-0 right-0 p-4 transition-opacity duration-300 z-10", showControls ? 'opacity-100' : 'opacity-0')}>
                 <div className="flex justify-end items-center gap-2">
                      {lecture.breakPosition && lecture.breakPosition > 0 && (
-                        <Button variant="outline" size="sm" className="text-white bg-black/30 hover:bg-white/20 hover:text-white" onClick={handleResumeFromBreak}>
+                        <Button variant="ghost" size="sm" className="text-white bg-black/30 hover:bg-white/20 hover:text-white" onClick={handleResumeFromBreak}>
                             <History className="mr-2 h-4 w-4" />
                             Resume from Break
                         </Button>
                      )}
-                     <Button variant="outline" size="sm" className="text-white bg-black/30 hover:bg-white/20 hover:text-white" onClick={handleTakeBreak}>
+                     <Button variant="ghost" size="sm" className="text-white bg-black/30 hover:bg-white/20 hover:text-white" onClick={handleTakeBreak}>
                         <Hourglass className="mr-2 h-4 w-4" />
                         Take a Break
                     </Button>
@@ -585,3 +584,5 @@ export default function CustomVideoPlayer({ lecture, notes }: CustomVideoPlayerP
         </div>
     );
 }
+
+    
