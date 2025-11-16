@@ -1,5 +1,4 @@
 
-
 import { DocumentData, Timestamp } from 'firebase/firestore';
 export type AccessLevel = 'full' | 'limited';
 
