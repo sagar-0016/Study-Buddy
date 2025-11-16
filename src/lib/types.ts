@@ -139,7 +139,7 @@ interface BaseLecture {
 }
 
 export interface LectureVideo extends BaseLecture {
-  type: 'video';
+  type?: 'video';
   subject: 'Physics' | 'Chemistry' | 'Maths';
   videoUrl: string;
   sdVideoUrl?: string;
@@ -147,6 +147,8 @@ export interface LectureVideo extends BaseLecture {
   channel: string;
   duration: string;
   categoryId?: string;
+  lastWatchedPosition?: number;
+  breakPosition?: number;
 }
 
 export interface LectureCategory extends BaseLecture {

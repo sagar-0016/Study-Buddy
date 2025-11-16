@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
-import type { Lecture, LectureNote, AccessLevel } from '@/lib/types';
+import type { Lecture, LectureNote, AccessLevel, LectureVideo } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,7 +38,7 @@ const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
                 lectureId: lecture.id,
                 lectureTitle: lecture.title,
                 text: doubtText,
-                subject: lecture.subject,
+                subject: (lecture as LectureVideo).subject,
                 accessLevel: accessLevel,
             });
             toast({ title: "Success", description: "Your doubt has been submitted." });
@@ -444,9 +444,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                                 <Skeleton className="w-full aspect-video" />
                             ) : (
                                 <CustomVideoPlayer 
-                                    src={lecture.videoUrl}
-                                    sdSrc={lecture.sdVideoUrl}
-                                    poster={lecture.thumbnailUrl}
+                                    lecture={lecture as LectureVideo}
                                     notes={notes}
                                 />
                             )}
@@ -458,7 +456,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>{lecture.title}</CardTitle>
-                                    <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
+                                    <CardDescription>{(lecture as LectureVideo).channel} • {(lecture as LectureVideo).subject}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <DescriptionSection lecture={lecture} />

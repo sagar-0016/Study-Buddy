@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback, MouseEvent } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { 
-    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine, Loader2, Minus, Plus, ArrowLeft, ArrowRight
+    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine, Loader2, Minus, Plus, ArrowLeft, ArrowRight, Hourglass, History
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -24,21 +25,22 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import type { LectureNote } from '@/lib/types';
+import type { Lecture, LectureNote, LectureVideo } from '@/lib/types';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
+import { updateVideoProgress } from '@/lib/lectures';
+import { useInterval } from '@/hooks/use-interval';
+
 
 // Configure pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 
 interface CustomVideoPlayerProps {
-    src: string;
-    sdSrc?: string;
-    poster: string;
+    lecture: LectureVideo;
     notes: LectureNote[];
 }
 
@@ -195,10 +197,10 @@ const NotesSidebar = ({
     );
 };
 
-export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomVideoPlayerProps) {
+export default function CustomVideoPlayer({ lecture, notes }: CustomVideoPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<HTMLDivElement>(null);
-    const timeRef = useRef<number>(0);
+    const timeRef = useRef<number>(lecture.lastWatchedPosition || 0); // Start from last watched position
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -218,6 +220,15 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
     const resizeStartPos = useRef(0);
     const initialSize = useRef(0);
 
+    const { toast } = useToast();
+
+    // Automatic progress saving every 10 seconds
+    useInterval(() => {
+        if (isPlaying && videoRef.current) {
+            updateVideoProgress(lecture.id, { lastWatchedPosition: videoRef.current.currentTime });
+        }
+    }, 10000);
+
     let controlsTimeout: NodeJS.Timeout;
 
     const formatTime = (time: number) => {
@@ -232,9 +243,11 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                 videoRef.current.play();
             } else {
                 videoRef.current.pause();
+                // Also save progress on pause
+                updateVideoProgress(lecture.id, { lastWatchedPosition: videoRef.current.currentTime });
             }
         }
-    }, []);
+    }, [lecture.id]);
     
     const toggleMute = () => {
         if (videoRef.current) {
@@ -259,7 +272,10 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
             setDuration(videoRef.current.duration);
-            videoRef.current.currentTime = timeRef.current;
+            // Set the start time from the last watched position
+            if (timeRef.current > 0 && timeRef.current < videoRef.current.duration) {
+                videoRef.current.currentTime = timeRef.current;
+            }
         }
     };
 
@@ -294,6 +310,29 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
             videoRef.current.currentTime += amount;
         }
     }, []);
+
+    const handleTakeBreak = async () => {
+        if (videoRef.current) {
+            const breakTime = videoRef.current.currentTime;
+            await updateVideoProgress(lecture.id, { breakPosition: breakTime });
+            toast({
+                title: "Break Point Saved",
+                description: `Your position at ${formatTime(breakTime)} has been saved.`,
+            });
+            // Refetch lecture data to update the state in the parent might be needed
+            // or just update local state if possible
+        }
+    };
+
+    const handleResumeFromBreak = () => {
+        if (videoRef.current && lecture.breakPosition) {
+            videoRef.current.currentTime = lecture.breakPosition;
+            toast({
+                title: "Resumed from Break",
+                description: `Jumped to your saved break point.`,
+            });
+        }
+    };
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
@@ -377,9 +416,13 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         const video = videoRef.current;
         if (!video) return;
         
-        video.addEventListener('play', () => setIsPlaying(true));
-        video.addEventListener('pause', () => setIsPlaying(false));
-        video.addEventListener('ended', () => setIsPlaying(false));
+        const playHandler = () => setIsPlaying(true);
+        const pauseHandler = () => setIsPlaying(false);
+        const endedHandler = () => setIsPlaying(false);
+        
+        video.addEventListener('play', playHandler);
+        video.addEventListener('pause', pauseHandler);
+        video.addEventListener('ended', endedHandler);
         
         const player = playerRef.current;
         if (player) {
@@ -400,13 +443,13 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         }
 
         return () => {
-            video.removeEventListener('play', () => setIsPlaying(true));
-            video.removeEventListener('pause', () => setIsPlaying(false));
-            video.removeEventListener('ended', () => setIsPlaying(false));
+            video.removeEventListener('play', playHandler);
+            video.removeEventListener('pause', pauseHandler);
+            video.removeEventListener('ended', endedHandler);
         }
     }, [handleKeyDown]);
 
-    const activeSrc = quality === 'hd' ? src : sdSrc || src;
+    const activeSrc = quality === 'hd' && lecture.videoUrl ? lecture.videoUrl : lecture.sdVideoUrl || lecture.videoUrl;
 
     return (
         <div ref={playerRef} className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group" onMouseMove={handleMouseMove}>
@@ -414,7 +457,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                 key={activeSrc}
                 ref={videoRef}
                 src={activeSrc}
-                poster={poster}
+                poster={lecture.thumbnailUrl}
                 className="w-full h-full"
                 onLoadedMetadata={handleLoadedMetadata}
                 onTimeUpdate={handleTimeUpdate}
@@ -434,7 +477,17 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
             </div>
             
              <div className={cn("absolute top-0 left-0 right-0 p-4 transition-opacity duration-300 z-10", showControls ? 'opacity-100' : 'opacity-0')}>
-                <div className="flex justify-end">
+                <div className="flex justify-end items-center gap-2">
+                     {lecture.breakPosition && lecture.breakPosition > 0 && (
+                        <Button variant="outline" size="sm" className="text-white bg-black/30 hover:bg-white/20 hover:text-white" onClick={handleResumeFromBreak}>
+                            <History className="mr-2 h-4 w-4" />
+                            Resume from Break
+                        </Button>
+                     )}
+                     <Button variant="outline" size="sm" className="text-white bg-black/30 hover:bg-white/20 hover:text-white" onClick={handleTakeBreak}>
+                        <Hourglass className="mr-2 h-4 w-4" />
+                        Take a Break
+                    </Button>
                      {isFullscreen && (
                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white" onClick={() => setIsNotesSidebarOpen(prev => !prev)}>
                             <Notebook className="mr-2 h-4 w-4" />
@@ -504,7 +557,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                         </PopoverContent>
                     </Popover>
 
-                     {sdSrc && (
+                     {lecture.sdVideoUrl && (
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">

@@ -206,7 +206,7 @@ export const createLectureCategory = async (title: string, description: string):
         description,
         type: 'category',
         lectureIds: [],
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp() as any,
     };
     const docRef = await addDoc(collection(db, 'lectures'), categoryData);
     return docRef.id;
@@ -293,4 +293,28 @@ export const getLecturesForCategory = async (category: LectureCategory): Promise
         console.error(`Error fetching lectures for category ${category.id}:`, error);
         return [];
     }
+};
+
+/**
+ * Updates the progress for a specific video lecture.
+ * Can update either the last watched position or a specific break point.
+ * @param {string} lectureId - The ID of the lecture document.
+ * @param {object} progress - An object containing the progress to update.
+ * @param {number} [progress.lastWatchedPosition] - The automatic last watched position in seconds.
+ * @param {number} [progress.breakPosition] - A manually set break position in seconds.
+ */
+export const updateVideoProgress = async (
+  lectureId: string,
+  progress: {
+    lastWatchedPosition?: number;
+    breakPosition?: number;
+  }
+): Promise<void> => {
+  try {
+    const lectureRef = doc(db, 'lectures', lectureId);
+    await updateDoc(lectureRef, progress);
+  } catch (error) {
+    console.error(`Error updating progress for lecture ${lectureId}:`, error);
+    // We don't re-throw because this is a background task and shouldn't interrupt the user.
+  }
 };
