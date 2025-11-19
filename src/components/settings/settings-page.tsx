@@ -18,6 +18,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { useInterval } from "@/hooks/use-interval";
+import { cn } from "@/lib/utils";
 
 
 export type MotivationMode = "ai" | "personal" | "mixed";
@@ -106,8 +107,8 @@ const YoutubeBlockToggle = () => {
     };
     
     const handleReasonSubmit = async () => {
-        if (reason.trim().length < 10) {
-            toast({ title: "Reason Required", description: "Please provide a reason of at least 10 characters.", variant: "destructive" });
+        if (reason.trim().length < 100) {
+            toast({ title: "Reason Required", description: "Please provide a more detailed reason (at least 100 characters).", variant: "destructive" });
             return;
         }
         setIsSaving(true);
@@ -236,14 +237,22 @@ const YoutubeBlockToggle = () => {
                             Before unblocking, please state your reason. This helps in maintaining focus.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="reason">Why do you need to unblock YouTube?</Label>
+                    <div className="py-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="reason">Why do you need to unblock YouTube?</Label>
+                            <span className={cn(
+                                "text-xs font-medium",
+                                reason.trim().length < 100 ? "text-muted-foreground" : "text-green-600"
+                            )}>
+                                {reason.trim().length} / 100
+                            </span>
+                        </div>
                         <Textarea 
                             id="reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            placeholder="e.g., 'Need to watch a specific lecture on Thermodynamics by...' (min. 10 characters)"
-                            rows={3}
+                            placeholder="e.g., 'I need to watch a specific lecture on Thermodynamics by...'"
+                            rows={4}
                         />
                     </div>
                     <DialogFooter>
