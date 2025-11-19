@@ -111,14 +111,6 @@ const YoutubeBlockToggle = () => {
     }, timeLeft > 0 ? 1000 : null);
 
 
-    const handleToggle = (checked: boolean) => {
-        if (viewState === 'blocked' && !checked) { // Trying to unblock
-            setShowInitialConfirm(true);
-        } else if (viewState === 'unblocked' && checked) { // Trying to re-block
-            updateBlockStatus(true);
-        }
-    };
-
     const handleReasonSubmit = async () => {
         if (reason.trim().length < 100) {
             toast({ title: "Reason Required", description: "Please provide a more detailed reason (at least 100 characters).", variant: "destructive" });
@@ -250,27 +242,27 @@ const YoutubeBlockToggle = () => {
                     </div>
                 );
             case 'blocked':
-            case 'unblocked':
-            default:
                 return (
-                    <div className="flex items-center space-x-4 rounded-md border p-4">
-                        <Youtube />
-                        <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium leading-none">
-                                Block YouTube
-                            </p>
+                     <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                        <div className="flex items-center">
+                           <Youtube className="mr-3"/>
+                           <p className="text-sm font-medium leading-none">YouTube is Blocked</p>
                         </div>
-                        {(isSaving) ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                            <Switch
-                                checked={viewState === 'blocked'}
-                                onCheckedChange={handleToggle}
-                                aria-label="Toggle YouTube block"
-                            />
-                        )}
+                        <Button variant="secondary" onClick={() => setShowInitialConfirm(true)}>Unblock YouTube</Button>
                     </div>
                 );
+             case 'unblocked':
+                return (
+                    <div className="flex items-center justify-between space-x-4 rounded-md border p-4">
+                         <div className="flex items-center">
+                           <Youtube className="mr-3 text-green-500"/>
+                           <p className="text-sm font-medium leading-none text-green-600">YouTube is Unblocked</p>
+                        </div>
+                        <Button variant="destructive" onClick={() => updateBlockStatus(true)}>Block YouTube</Button>
+                    </div>
+                );
+            default:
+                return null;
         }
     }
 
@@ -281,7 +273,7 @@ const YoutubeBlockToggle = () => {
                     <CardTitle>YouTube Blocker</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {renderContent()}
+                    {isSaving ? <Skeleton className="h-14 w-full" /> : renderContent()}
                 </CardContent>
             </Card>
             
