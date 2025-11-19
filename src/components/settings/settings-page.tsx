@@ -6,8 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Bot, User, Blend } from "lucide-react";
+import { Bot, User, Blend, Youtube } from "lucide-react";
 import MenstrualCycleTracker from "./menstrual-cycle-tracker";
+import { Switch } from "@/components/ui/switch";
+import { useEffect, useState } from "react";
+import { getYoutubeBlockStatus, setYoutubeBlockStatus } from "@/lib/youtube";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "../ui/skeleton";
 
 export type MotivationMode = "ai" | "personal" | "mixed";
 
@@ -41,12 +46,91 @@ const ProfileCard = () => {
     )
 }
 
+const YoutubeBlockToggle = () => {
+    const [isBlocked, setIsBlocked] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            setIsLoading(true);
+            const status = await getYoutubeBlockStatus();
+            setIsBlocked(status);
+            setIsLoading(false);
+        }
+        fetchStatus();
+    }, []);
+
+    const handleToggle = async (checked: boolean) => {
+        setIsBlocked(checked); // Optimistic update
+        try {
+            await setYoutubeBlockStatus(checked);
+            toast({
+                title: "Status Updated",
+                description: `YouTube is now ${checked ? 'blocked' : 'unblocked'}.`,
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Could not update the status.",
+                variant: "destructive",
+            });
+            setIsBlocked(!checked); // Revert on error
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <Card className="border-0">
+                <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+            <CardHeader>
+                <CardTitle>YouTube Blocker</CardTitle>
+                <CardDescription>
+                    Toggle this to block or unblock YouTube functionality across the app.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center space-x-4 rounded-md border p-4">
+                    <Youtube />
+                    <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                            Block YouTube
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            When enabled, this will restrict access to YouTube videos.
+                        </p>
+                    </div>
+                    <Switch
+                        checked={isBlocked}
+                        onCheckedChange={handleToggle}
+                        aria-label="Toggle YouTube block"
+                    />
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
+
 export default function SettingsPage() {
     const [motivationMode, setMotivationMode] = useLocalStorage<MotivationMode>('motivation-mode', 'mixed');
 
     return (
         <div className="space-y-6">
             <ProfileCard />
+            <YoutubeBlockToggle />
             <MenstrualCycleTracker />
             <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader>
