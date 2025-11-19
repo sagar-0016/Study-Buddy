@@ -7,7 +7,6 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp, addDoc, collection, Ti
 export interface AccessStatus {
     blocked: boolean;
     lastAccessRequest: Date | null;
-    lastUnblockedAt: Date | null;
 }
 
 /**
@@ -25,23 +24,21 @@ export const getYoutubeBlockStatus = async (): Promise<AccessStatus> => {
       return {
           blocked: data.blocked !== false, // Default to blocked if undefined
           lastAccessRequest: data.lastAccessRequest ? (data.lastAccessRequest as Timestamp).toDate() : null,
-          lastUnblockedAt: data.lastUnblockedAt ? (data.lastUnblockedAt as Timestamp).toDate() : null,
       };
     } else {
       // If the document doesn't exist, create it with blocked: true
-      await setDoc(docRef, { blocked: true, lastAccessRequest: null, lastUnblockedAt: null });
-      return { blocked: true, lastAccessRequest: null, lastUnblockedAt: null };
+      await setDoc(docRef, { blocked: true, lastAccessRequest: null });
+      return { blocked: true, lastAccessRequest: null };
     }
   } catch (error) {
     console.error("Error getting YouTube block status:", error);
-    return { blocked: true, lastAccessRequest: null, lastUnblockedAt: null }; // Safely default to blocked on error
+    return { blocked: true, lastAccessRequest: null }; // Safely default to blocked on error
   }
 };
 
 /**
  * Updates the YouTube block status in Firestore.
- * If unblocking, it also clears the request timestamp and sets the unblock time.
- * If blocking, it clears all timestamps.
+ * If blocking, it also clears the request timestamp.
  * @param {boolean} blocked - The new status to set.
  */
 export const setYoutubeBlockStatus = async (blocked: boolean): Promise<void> => {
@@ -50,20 +47,15 @@ export const setYoutubeBlockStatus = async (blocked: boolean): Promise<void> => 
     const updateData: any = { blocked };
 
     if (blocked) {
-        // When blocking, clear out all timestamps.
+        // When re-blocking, clear out the request timestamp.
         updateData.lastAccessRequest = null;
-        updateData.lastUnblockedAt = null;
-    } else {
-        // When unblocking, set the unblock time and clear the request time.
-        updateData.lastAccessRequest = null;
-        updateData.lastUnblockedAt = serverTimestamp();
     }
     
     await updateDoc(docRef, updateData);
   } catch (error) {
     if ((error as any).code === 'not-found') {
         const docRef = doc(db, 'youtubeBlock', 'status');
-        await setDoc(docRef, { blocked: blocked, lastAccessRequest: null, lastUnblockedAt: null });
+        await setDoc(docRef, { blocked: blocked, lastAccessRequest: null });
     } else {
         console.error("Error setting YouTube block status:", error);
         throw error;

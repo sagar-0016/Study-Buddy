@@ -55,9 +55,10 @@ const ProfileCard = () => {
 
 const YoutubeBlockToggle = () => {
     const [accessStatus, setAccessStatus] = useState<AccessStatus | null>(null);
-    const [isBlocked, setIsBlocked] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [viewState, setViewState] = useState<'blocked' | 'waiting' | 'ready' | 'unblocked'>('blocked');
+    const [timeLeft, setTimeLeft] = useState<number>(0);
     
     // Dialog states
     const [showInitialConfirm, setShowInitialConfirm] = useState(false);
@@ -65,49 +66,34 @@ const YoutubeBlockToggle = () => {
     const [showFinalConfirm, setShowFinalConfirm] = useState(false);
 
     const [reason, setReason] = useState("");
-    const [timeLeft, setTimeLeft] = useState<number | null>(null);
-    const [unblockTimeLeft, setUnblockTimeLeft] = useState<number | null>(null);
 
     const { toast } = useToast();
 
     const fetchStatus = async () => {
-        setIsLoading(true);
         const status = await getYoutubeBlockStatus();
         setAccessStatus(status);
-        setIsBlocked(status.blocked);
 
-        const now = Date.now();
-        
-        // Handle pending unblock request timer
-        if (status.lastAccessRequest) {
-            const requestTime = status.lastAccessRequest.getTime();
-            const unblockTime = requestTime + 5 * 60 * 1000;
-            if (now < unblockTime) {
-                setTimeLeft(Math.round((unblockTime - now) / 1000));
+        if (status.blocked) {
+            if (status.lastAccessRequest) {
+                const now = Date.now();
+                const requestTime = status.lastAccessRequest.getTime();
+                const diffSeconds = (now - requestTime) / 1000;
+                
+                if (diffSeconds < 300) { // Less than 5 minutes
+                    setViewState('waiting');
+                    setTimeLeft(300 - Math.round(diffSeconds));
+                } else if (diffSeconds < 900) { // Between 5 and 15 minutes
+                    setViewState('ready');
+                    setTimeLeft(900 - Math.round(diffSeconds));
+                } else {
+                    setViewState('blocked'); // Request expired
+                }
             } else {
-                // Timer finished while user was away, so unblock
-                await setYoutubeBlockStatus(false);
-                setIsBlocked(false);
+                setViewState('blocked');
             }
         } else {
-            setTimeLeft(null);
+            setViewState('unblocked');
         }
-
-        // Handle active unblocked session timer
-        if (!status.blocked && status.lastUnblockedAt) {
-            const unblockedAtTime = status.lastUnblockedAt.getTime();
-            const reblockTime = unblockedAtTime + 15 * 60 * 1000;
-             if (now < reblockTime) {
-                setUnblockTimeLeft(Math.round((reblockTime - now) / 1000));
-            } else {
-                // Unblock window expired, so re-block
-                await setYoutubeBlockStatus(true);
-                setIsBlocked(true);
-            }
-        } else {
-            setUnblockTimeLeft(null);
-        }
-
         setIsLoading(false);
     };
 
@@ -115,42 +101,21 @@ const YoutubeBlockToggle = () => {
         fetchStatus();
     }, []);
 
-    // Countdown timer for the 5-minute unblock delay
     useInterval(() => {
-        if (timeLeft !== null) {
-            if (timeLeft > 1) {
-                setTimeLeft(timeLeft - 1);
-            } else {
-                setTimeLeft(null);
-                setYoutubeBlockStatus(false).then(() => {
-                    toast({ title: "YouTube Unblocked", description: "Access granted for 15 minutes." });
-                    fetchStatus();
-                });
-            }
+        if (timeLeft > 0) {
+            setTimeLeft(timeLeft - 1);
+        } else {
+            // Timer finished, refetch status to transition to the next state
+            fetchStatus();
         }
-    }, timeLeft !== null ? 1000 : null);
-
-    // Countdown timer for the 15-minute unblocked session
-    useInterval(() => {
-        if (unblockTimeLeft !== null) {
-            if (unblockTimeLeft > 1) {
-                setUnblockTimeLeft(unblockTimeLeft - 1);
-            } else {
-                setUnblockTimeLeft(null);
-                setYoutubeBlockStatus(true).then(() => {
-                    toast({ title: "YouTube Blocked", description: "Your 15-minute access window has ended.", variant: "destructive" });
-                    fetchStatus();
-                });
-            }
-        }
-    }, unblockTimeLeft !== null ? 1000 : null);
+    }, timeLeft > 0 ? 1000 : null);
 
 
     const handleToggle = (checked: boolean) => {
-        if (isBlocked && !checked) { // If trying to unblock
+        if (viewState === 'blocked' && !checked) { // Trying to unblock
             setShowInitialConfirm(true);
-        } else {
-            updateBlockStatus(checked); // Directly block
+        } else if (viewState === 'unblocked' && checked) { // Trying to re-block
+            updateBlockStatus(true);
         }
     };
 
@@ -182,11 +147,24 @@ const YoutubeBlockToggle = () => {
         setIsSaving(true);
         try {
             await clearYoutubeAccessRequest();
-            setTimeLeft(null);
+            setTimeLeft(0);
             toast({ title: "Aborted", description: "Good choice. Stay focused!" });
             await fetchStatus();
         } catch (error) {
              toast({ title: "Error", description: "Could not abort the timer.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+    
+    const handleUnblockNow = async () => {
+        setIsSaving(true);
+        try {
+            await setYoutubeBlockStatus(false);
+            toast({ title: "YouTube Unblocked", description: "Access granted. Please use it wisely." });
+            await fetchStatus();
+        } catch (error) {
+            toast({ title: "Error", description: "Could not unblock.", variant: "destructive" });
         } finally {
             setIsSaving(false);
         }
@@ -196,7 +174,6 @@ const YoutubeBlockToggle = () => {
         setIsSaving(true);
         try {
             await setYoutubeBlockStatus(newStatus);
-            setIsBlocked(newStatus);
             toast({
                 title: "Status Updated",
                 description: `YouTube is now ${newStatus ? 'blocked' : 'unblocked'}.`,
@@ -218,7 +195,6 @@ const YoutubeBlockToggle = () => {
             <Card className="border-0">
                 <CardHeader>
                     <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
                 </CardHeader>
                 <CardContent>
                     <Skeleton className="h-10 w-full" />
@@ -234,64 +210,68 @@ const YoutubeBlockToggle = () => {
     }
 
     const renderContent = () => {
-        if (timeLeft !== null) {
-            return (
-                <div className="flex items-center justify-between space-x-4 rounded-md border p-4 bg-yellow-50 dark:bg-yellow-900/20">
-                    <div className="flex items-center">
-                        <Timer className="h-5 w-5 text-yellow-600 mr-3" />
+        switch (viewState) {
+            case 'waiting':
+                return (
+                    <div className="flex items-center justify-between space-x-4 rounded-md border p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                        <div className="flex items-center">
+                            <Timer className="h-5 w-5 text-yellow-600 mr-3" />
+                            <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium leading-none text-yellow-800 dark:text-yellow-300">
+                                    Unblock request pending...
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Opportunity to unblock in {formatTime(timeLeft)}.
+                                </p>
+                            </div>
+                        </div>
+                        <Button variant="destructive" size="sm" onClick={handleAbort} disabled={isSaving}>
+                            <Ban className="mr-2 h-4 w-4" /> Abort
+                        </Button>
+                    </div>
+                );
+            case 'ready':
+                return (
+                    <div className="flex items-center justify-between space-x-4 rounded-md border p-4 bg-green-50 dark:bg-green-900/20">
+                        <div className="flex items-center">
+                            <Timer className="h-5 w-5 text-green-600 mr-3" />
+                            <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium leading-none text-green-800 dark:text-green-300">
+                                    Ready to Unblock
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    This option expires in {formatTime(timeLeft)}.
+                                </p>
+                            </div>
+                        </div>
+                        <Button variant="secondary" onClick={handleUnblockNow} disabled={isSaving}>
+                           Unblock Now
+                        </Button>
+                    </div>
+                );
+            case 'blocked':
+            case 'unblocked':
+            default:
+                return (
+                    <div className="flex items-center space-x-4 rounded-md border p-4">
+                        <Youtube />
                         <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium leading-none text-yellow-800 dark:text-yellow-300">
-                                Unblocking for 15 minutes in {formatTime(timeLeft)}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Wait for the timer to finish or abort.
+                            <p className="text-sm font-medium leading-none">
+                                Block YouTube
                             </p>
                         </div>
+                        {(isSaving) ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                            <Switch
+                                checked={viewState === 'blocked'}
+                                onCheckedChange={handleToggle}
+                                aria-label="Toggle YouTube block"
+                            />
+                        )}
                     </div>
-                    <Button variant="destructive" size="sm" onClick={handleAbort} disabled={isSaving}>
-                        <Ban className="mr-2 h-4 w-4" /> Abort
-                    </Button>
-                </div>
-            )
+                );
         }
-        
-        if (unblockTimeLeft !== null) {
-             return (
-                <div className="flex items-center justify-between space-x-4 rounded-md border p-4 bg-green-50 dark:bg-green-900/20">
-                    <div className="flex items-center">
-                        <Timer className="h-5 w-5 text-green-600 mr-3" />
-                        <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium leading-none text-green-800 dark:text-green-300">
-                                YouTube is unblocked.
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Automatically re-blocking in {formatTime(unblockTimeLeft)}.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )
-        }
-
-        return (
-            <div className="flex items-center space-x-4 rounded-md border p-4">
-                <Youtube />
-                <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                        Block YouTube
-                    </p>
-                </div>
-                {(isSaving) ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                    <Switch
-                        checked={isBlocked}
-                        onCheckedChange={handleToggle}
-                        aria-label="Toggle YouTube block"
-                    />
-                )}
-            </div>
-        )
     }
 
     return (
@@ -305,7 +285,6 @@ const YoutubeBlockToggle = () => {
                 </CardContent>
             </Card>
             
-            {/* Initial Confirmation */}
             <AlertDialog open={showInitialConfirm} onOpenChange={setShowInitialConfirm}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -323,7 +302,6 @@ const YoutubeBlockToggle = () => {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Reason Dialog */}
             <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>
                 <DialogContent>
                     <DialogHeader>
@@ -335,7 +313,7 @@ const YoutubeBlockToggle = () => {
                     <div className="py-4 space-y-2">
                         <div className="flex justify-between items-center">
                             <Label htmlFor="reason">Why do you need to unblock YouTube?</Label>
-                            <span className={cn(
+                             <span className={cn(
                                 "text-xs font-medium",
                                 reason.trim().length < 100 ? "text-muted-foreground" : "text-green-600"
                             )}>
@@ -346,7 +324,7 @@ const YoutubeBlockToggle = () => {
                             id="reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            placeholder="e.g., 'I need to watch a specific lecture on Thermodynamics by...' (Please be detailed)"
+                            placeholder="e.g., 'I need to watch a specific lecture on Thermodynamics by...' (Please be detailed - 100 characters minimum)"
                             rows={4}
                         />
                     </div>
@@ -359,13 +337,12 @@ const YoutubeBlockToggle = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Final Confirmation */}
             <AlertDialog open={showFinalConfirm} onOpenChange={setShowFinalConfirm}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Final Confirmation</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Your reason is logged. Unblocking will start a 5-minute timer, after which you get 15 minutes of access. Is this what you want?
+                           Your reason is logged. An option to unblock will appear in 5 minutes and will be available for 10 minutes. Do you want to proceed?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
