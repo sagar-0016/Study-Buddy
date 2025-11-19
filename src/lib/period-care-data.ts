@@ -1,11 +1,11 @@
 
-import { GlassWater, Heater, Film, Bed, Droplets } from 'lucide-react';
+import { GlassWater, Heater, Film, Bed, Droplets, Leaf } from 'lucide-react';
 
 export const periodCareTips = [
     {
         icon: GlassWater,
         title: "Warm & Cozy Drinks",
-        text: "Sip on some chamomile tea or warm water. It helps soothe cramps and keeps you hydrated.",
+        text: "Sip on some warm water or maybe soup. It helps soothe cramps and keeps you hydrated.",
         color: 'text-amber-500',
     },
     {
@@ -17,7 +17,7 @@ export const periodCareTips = [
     {
         icon: Film,
         title: "Comforting Distractions",
-        text: "Watch your favorite comfort movie or listen to a soothing playlist. It’s okay to take your mind off things.",
+        text: "Listen to a soothing playlist or maybe watch a small youtube video of some geoplitical, historical or interesting topic. It’s okay to take your mind off things.",
         color: 'text-indigo-500',
     },
     {
@@ -25,6 +25,12 @@ export const periodCareTips = [
         title: "Prioritize Rest",
         text: "Your body is doing a lot. Don't feel guilty for taking a nap or getting a little extra sleep. Rest is productive.",
         color: 'text-rose-500',
+    },
+    {
+        icon: Leaf,
+        title: "Mindful Snacking",
+        text: "Dark chocolate is a great source of magnesium, which can help ease cramps. A small piece can be a comforting and beneficial treat.",
+        color: 'text-green-500'
     },
     {
         icon: Droplets,
