@@ -6,14 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Bot, User, Blend, Youtube, Loader2 } from "lucide-react";
+import { Bot, User, Blend, Youtube, Loader2, Timer, Ban } from "lucide-react";
 import MenstrualCycleTracker from "./menstrual-cycle-tracker";
 import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
-import { getYoutubeBlockStatus, setYoutubeBlockStatus } from "@/lib/youtube";
+import { getYoutubeBlockStatus, setYoutubeBlockStatus, logYoutubeAccessRequest, AccessStatus } from "@/lib/youtube";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import { useInterval } from "@/hooks/use-interval";
 
 
 export type MotivationMode = "ai" | "personal" | "mixed";
@@ -49,31 +53,92 @@ const ProfileCard = () => {
 }
 
 const YoutubeBlockToggle = () => {
+    const [accessStatus, setAccessStatus] = useState<AccessStatus | null>(null);
     const [isBlocked, setIsBlocked] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showReasonDialog, setShowReasonDialog] = useState(false);
+    const [reason, setReason] = useState("");
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const { toast } = useToast();
 
-    useEffect(() => {
-        const fetchStatus = async () => {
-            setIsLoading(true);
-            const status = await getYoutubeBlockStatus();
-            setIsBlocked(status);
-            setIsLoading(false);
+    const fetchStatus = async () => {
+        setIsLoading(true);
+        const status = await getYoutubeBlockStatus();
+        setAccessStatus(status);
+        setIsBlocked(status.blocked);
+        if (status.lastAccessRequest) {
+            const now = Date.now();
+            const requestTime = status.lastAccessRequest.getTime();
+            const fiveMinutes = 5 * 60 * 1000;
+            if (now < requestTime + fiveMinutes) {
+                setTimeLeft(Math.round((requestTime + fiveMinutes - now) / 1000));
+            }
         }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
         fetchStatus();
     }, []);
 
+    useInterval(() => {
+        if (timeLeft !== null) {
+            if (timeLeft > 1) {
+                setTimeLeft(timeLeft - 1);
+            } else {
+                setTimeLeft(null);
+                setYoutubeBlockStatus(false).then(() => {
+                    toast({ title: "YouTube Unblocked", description: "You can now access YouTube." });
+                    fetchStatus();
+                });
+            }
+        }
+    }, timeLeft !== null ? 1000 : null);
+
+
     const handleToggle = (checked: boolean) => {
         if (isBlocked && !checked) { // If trying to unblock
-            setShowConfirmation(true);
+            setShowReasonDialog(true);
         } else {
-            updateStatus(checked);
+            updateBlockStatus(checked);
         }
     };
     
-    const updateStatus = async (newStatus: boolean) => {
+    const handleReasonSubmit = async () => {
+        if (reason.trim().length < 10) {
+            toast({ title: "Reason Required", description: "Please provide a reason of at least 10 characters.", variant: "destructive" });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await logYoutubeAccessRequest(reason);
+            setShowReasonDialog(false);
+            setReason('');
+            toast({ title: "Request Logged", description: "Your request has been logged. The timer has started." });
+            await fetchStatus(); // Refetch status to start the timer
+        } catch (error) {
+            toast({ title: "Error", description: "Could not log your request.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+    
+    const handleAbort = async () => {
+        setIsSaving(true);
+        try {
+            await setYoutubeBlockStatus(true); // Ensure it remains blocked
+            setTimeLeft(null);
+            toast({ title: "Aborted", description: "Good choice. Stay focused!" });
+            await fetchStatus();
+        } catch (error) {
+             toast({ title: "Error", description: "Could not abort the timer.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    const updateBlockStatus = async (newStatus: boolean) => {
         setIsSaving(true);
         try {
             await setYoutubeBlockStatus(newStatus);
@@ -82,6 +147,7 @@ const YoutubeBlockToggle = () => {
                 title: "Status Updated",
                 description: `YouTube is now ${newStatus ? 'blocked' : 'unblocked'}.`,
             });
+            await fetchStatus();
         } catch (error) {
             toast({
                 title: "Error",
@@ -107,55 +173,87 @@ const YoutubeBlockToggle = () => {
         )
     }
 
+    const formatTime = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
     return (
         <>
             <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader>
                     <CardTitle>YouTube Blocker</CardTitle>
-                    <CardDescription>
-                        Toggle this to block or unblock YouTube functionality across the app.
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center space-x-4 rounded-md border p-4">
-                        <Youtube />
-                        <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium leading-none">
-                                Block YouTube
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                When enabled, this will restrict access to YouTube videos.
-                            </p>
+                    {timeLeft !== null ? (
+                        <div className="flex items-center justify-between space-x-4 rounded-md border p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                            <div className="flex items-center">
+                                <Timer className="h-5 w-5 text-yellow-600 mr-3" />
+                                <div className="flex-1 space-y-1">
+                                    <p className="text-sm font-medium leading-none text-yellow-800 dark:text-yellow-300">
+                                        Unblocking in {formatTime(timeLeft)}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Wait for the timer to finish or abort.
+                                    </p>
+                                </div>
+                            </div>
+                            <Button variant="destructive" size="sm" onClick={handleAbort} disabled={isSaving}>
+                                <Ban className="mr-2 h-4 w-4" /> Abort
+                            </Button>
                         </div>
-                        {isSaving ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                            <Switch
-                                checked={isBlocked}
-                                onCheckedChange={handleToggle}
-                                aria-label="Toggle YouTube block"
-                            />
-                        )}
-                    </div>
+                    ) : (
+                        <div className="flex items-center space-x-4 rounded-md border p-4">
+                            <Youtube />
+                            <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium leading-none">
+                                    Block YouTube
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    This will restrict access to YouTube videos.
+                                </p>
+                            </div>
+                            {(isSaving) ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <Switch
+                                    checked={isBlocked}
+                                    onCheckedChange={handleToggle}
+                                    aria-label="Toggle YouTube block"
+                                />
+                            )}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
-            <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Disabling this blocker might lead to distractions. Remember your goals. Do you still want to proceed?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => updateStatus(false)}>
-                            Yes, unblock it
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>A Quick Question</DialogTitle>
+                        <DialogDescription>
+                            Before unblocking, please state your reason. This helps in maintaining focus.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="reason">Why do you need to unblock YouTube?</Label>
+                        <Textarea 
+                            id="reason"
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            placeholder="e.g., 'Need to watch a specific lecture on Thermodynamics by...' (min. 10 characters)"
+                            rows={3}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                        <Button onClick={handleReasonSubmit} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="animate-spin" /> : "Log Request & Start Timer"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }
