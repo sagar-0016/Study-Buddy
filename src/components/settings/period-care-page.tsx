@@ -10,7 +10,7 @@ import { periodCareTips } from '@/lib/period-care-data';
 import { Card, CardContent } from '@/components/ui/card';
 
 
-const heartChars = ['♡', '♥', '❣', 'ღ', '♥️', '💗'];
+const heartChars = ['♡', '♥', '❣', 'ღ', '♥️', '💗', ':)'];
 
 export default function PeriodCarePage() {
     const containerVariants = {
