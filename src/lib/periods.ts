@@ -84,14 +84,10 @@ export const logPeriodEnd = async (endDate: Date): Promise<void> => {
         loggedAt: serverTimestamp()
     });
 
-    // 2. Calculate the next expected date based on the start date of the cycle that just ended
-    const nextExpectedDate = add(actualStartDate, { days: AVERAGE_CYCLE_LENGTH });
-    const nextCertainDate = add(nextExpectedDate, { days: 2 });
-
-    // 3. Reset the 'current' period document for the next cycle
+    // 2. Reset the 'current' period document for the next cycle
     await setDoc(periodRef, {
-        expectedDate: Timestamp.fromDate(nextExpectedDate),
-        certainDate: Timestamp.fromDate(nextCertainDate),
+        expectedDate: null,
+        certainDate: null,
         actualStartDate: null,
         actualEndDate: null,
     });
