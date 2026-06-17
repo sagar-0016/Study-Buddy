@@ -72,14 +72,14 @@ export default function MaintenanceOverlay() {
                       animate={{ opacity: 1, y: -16, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
-                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl bg-emerald-600 px-4 py-3 text-zinc-100 text-sm shadow-[0_10px_25px_-5px_rgba(16,185,129,0.45)] leading-relaxed select-none"
+                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl border border-emerald-500/20 bg-zinc-900/95 px-4 py-3 text-emerald-400 text-sm shadow-[0_8px_32px_rgba(16,185,129,0.15)] backdrop-blur-md leading-relaxed select-none"
                     >
-                      <p className="font-sans font-medium text-center flex flex-col gap-1 items-center">
+                      <p className="font-mono font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
                         <span className="whitespace-nowrap">ABHI JAAO PADHO 😤</span>
                       </p>
                       {/* Triangle Arrow pointing down to the dot */}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[8px] border-t-emerald-600 border-x-[8px] border-x-transparent" />
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[8px] border-t-zinc-900/95 border-x-[8px] border-x-transparent" />
                     </motion.div>
                   )}
                 </AnimatePresence>
