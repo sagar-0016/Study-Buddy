@@ -57,8 +57,7 @@ export default function MaintenanceOverlay() {
           </h1>
         </div>
 
-        {/* Interactive Dot & Anchored Chat Bubble */}
-        <div className="relative flex flex-col items-center justify-center h-32 w-full max-w-sm">
+        <div className="relative flex flex-col items-center justify-center h-16 w-full max-w-sm">
           <AnimatePresence>
             {showButton && (
               <div className="relative flex items-center justify-center">
@@ -71,7 +70,7 @@ export default function MaintenanceOverlay() {
                       animate={{ opacity: 1, x: 20, scale: 1 }}
                       exit={{ opacity: 0, x: 10, scale: 0.95 }}
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
-                      className="absolute left-full -top-2 ml-3 z-20 w-72 rounded-2xl rounded-tl-none bg-white p-4 text-zinc-950 text-sm shadow-2xl leading-relaxed select-none border-none"
+                      className="absolute left-full top-[3px] ml-3 z-20 w-72 rounded-2xl rounded-tl-none bg-white p-4 text-zinc-950 text-sm shadow-2xl leading-relaxed select-none border-none"
                     >
                       <p className="font-mono font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
