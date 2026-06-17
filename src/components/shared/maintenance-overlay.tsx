@@ -71,7 +71,7 @@ export default function MaintenanceOverlay() {
                       animate={{ opacity: 1, y: -16, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
-                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl border border-emerald-500/20 bg-zinc-900/95 px-4 py-3 text-emerald-400 text-sm shadow-2xl backdrop-blur-md leading-relaxed select-none"
+                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl border border-white/20 bg-zinc-900/95 px-4 py-3 text-emerald-400 text-sm shadow-2xl backdrop-blur-md leading-relaxed select-none"
                     >
                       <p className="font-mono font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
