@@ -17,7 +17,7 @@ import Icon from '@/components/ui/icon';
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   
   const getBadgeText = () => {
-    const accessLevel = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    const accessLevel = (typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     
     if (deck.status === 'available') return 'Available';
     if (deck.status === 'not-available') {

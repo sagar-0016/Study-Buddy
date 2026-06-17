@@ -482,7 +482,7 @@ export default function RevisionCentre() {
   }, [])
 
   useEffect(() => {
-    const level = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    const level = (typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     setAccessLevel(level);
 
     const performInitialCheck = async () => {

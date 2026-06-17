@@ -8,7 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
  * @returns {boolean} True if direct editing is enabled, false otherwise.
  */
 export const isDirectEditEnabled = (): boolean => {
-    if (typeof window === "undefined") {
+    if (typeof window === "undefined" || typeof document === "undefined") {
         return false; // Default to false on the server
     }
     try {

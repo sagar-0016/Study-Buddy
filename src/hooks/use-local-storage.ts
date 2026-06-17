@@ -5,7 +5,7 @@ import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
       return initialValue;
     }
     try {
@@ -18,7 +18,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetState
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {

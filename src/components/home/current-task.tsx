@@ -57,7 +57,7 @@ export default function CurrentTask() {
   const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
   useEffect(() => {
-    const level = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    const level = (typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     setAccessLevel(level);
   }, []);
 

@@ -2,6 +2,9 @@
 import type { Metadata } from 'next';
 import "./globals.css";
 import Providers from './providers';
+import MaintenanceOverlay from '@/components/shared/maintenance-overlay';
+
+const IS_MAINTENANCE = false; // Toggle to true to put the site on maintenance
 
 export const metadata: Metadata = {
   title: "Pranjal's Study Buddy",
@@ -31,7 +34,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <Providers>{children}</Providers>
+        {IS_MAINTENANCE ? (
+          <MaintenanceOverlay />
+        ) : (
+          <Providers>{children}</Providers>
+        )}
       </body>
     </html>
   );
