@@ -2,13 +2,15 @@
 import { db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
+import { IS_MAINTENANCE } from './config';
+
 /**
  * Checks if direct editing for schedules is enabled via a local storage flag.
  * This is a client-side check.
  * @returns {boolean} True if direct editing is enabled, false otherwise.
  */
 export const isDirectEditEnabled = (): boolean => {
-    if (typeof window === "undefined" || typeof document === "undefined") {
+    if (IS_MAINTENANCE || typeof window === "undefined" || typeof document === "undefined") {
         return false; // Default to false on the server
     }
     try {

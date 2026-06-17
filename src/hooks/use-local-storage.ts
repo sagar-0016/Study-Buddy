@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { IS_MAINTENANCE } from '@/lib/config';
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
+    if (IS_MAINTENANCE || typeof window === 'undefined' || typeof document === 'undefined') {
       return initialValue;
     }
     try {
@@ -18,7 +19,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetState
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    if (!IS_MAINTENANCE && typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {

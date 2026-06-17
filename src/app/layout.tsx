@@ -4,7 +4,7 @@ import "./globals.css";
 import Providers from './providers';
 import MaintenanceOverlay from '@/components/shared/maintenance-overlay';
 
-const IS_MAINTENANCE = false; // Toggle to true to put the site on maintenance
+import { IS_MAINTENANCE } from '@/lib/config';
 
 export const metadata: Metadata = {
   title: "Pranjal's Study Buddy",

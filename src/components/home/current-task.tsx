@@ -47,6 +47,8 @@ const DayTypeSelector = ({ onSelect }: { onSelect: (type: DayType) => void }) =>
     </div>
 )
 
+import { IS_MAINTENANCE } from '@/lib/config';
+
 export default function CurrentTask() {
   const [dayType, setDayTypeState] = useState<DayType | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
@@ -57,7 +59,7 @@ export default function CurrentTask() {
   const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
   useEffect(() => {
-    const level = (typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    const level = (!IS_MAINTENANCE && typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     setAccessLevel(level);
   }, []);
 

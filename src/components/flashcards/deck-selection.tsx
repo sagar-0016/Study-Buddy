@@ -14,10 +14,12 @@ import type { AccessLevel } from '@/context/auth-context';
 import Icon from '@/components/ui/icon';
 
 
+import { IS_MAINTENANCE } from '@/lib/config';
+
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   
   const getBadgeText = () => {
-    const accessLevel = (typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    const accessLevel = (!IS_MAINTENANCE && typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     
     if (deck.status === 'available') return 'Available';
     if (deck.status === 'not-available') {

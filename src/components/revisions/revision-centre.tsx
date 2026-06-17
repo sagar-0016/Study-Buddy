@@ -481,8 +481,10 @@ export default function RevisionCentre() {
     setIsLoading(false);
   }, [])
 
+import { IS_MAINTENANCE } from '@/lib/config';
+
   useEffect(() => {
-    const level = (typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    const level = (!IS_MAINTENANCE && typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     setAccessLevel(level);
 
     const performInitialCheck = async () => {
