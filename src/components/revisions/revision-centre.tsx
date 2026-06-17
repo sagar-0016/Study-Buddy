@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { IS_MAINTENANCE } from '@/lib/config';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon, BrainCircuit, AlertTriangle } from 'lucide-react';
@@ -480,8 +481,6 @@ export default function RevisionCentre() {
     setAllTopics(fetchedTopics);
     setIsLoading(false);
   }, [])
-
-import { IS_MAINTENANCE } from '@/lib/config';
 
   useEffect(() => {
     const level = (!IS_MAINTENANCE && typeof window !== 'undefined' && typeof document !== 'undefined') ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;

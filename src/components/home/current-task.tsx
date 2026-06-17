@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { IS_MAINTENANCE } from '@/lib/config';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Clock, HelpCircle, Moon } from "lucide-react";
@@ -46,8 +47,6 @@ const DayTypeSelector = ({ onSelect }: { onSelect: (type: DayType) => void }) =>
         </div>
     </div>
 )
-
-import { IS_MAINTENANCE } from '@/lib/config';
 
 export default function CurrentTask() {
   const [dayType, setDayTypeState] = useState<DayType | null>(null);
