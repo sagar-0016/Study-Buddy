@@ -70,8 +70,9 @@ export default function MaintenanceOverlay() {
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
                       className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl bg-emerald-600 px-4 py-3 text-zinc-100 text-sm shadow-[0_10px_25px_-5px_rgba(16,185,129,0.45)] leading-relaxed select-none"
                     >
-                      <p className="font-sans font-medium text-center">
-                        AAPKA MAINTENANCE BHI KAREGE 😌, ABHI JAAO PADO 😤
+                      <p className="font-sans font-medium text-center flex flex-col gap-1 items-center">
+                        <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
+                        <span className="whitespace-nowrap">ABHI JAAO PADO 😤</span>
                       </p>
                       {/* Triangle Arrow pointing down to the dot */}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[8px] border-t-emerald-600 border-x-[8px] border-x-transparent" />
