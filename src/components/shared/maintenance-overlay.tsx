@@ -110,7 +110,7 @@ export default function MaintenanceOverlay() {
 
       {/* Subtle Bottom watermark */}
       <div className="absolute bottom-6 text-[10px] text-zinc-700 tracking-wider">
-        STUDY BUDDY v6.9
+        STUDY BUDDY v6.7
       </div>
     </div>
   );
