@@ -1,5 +1,5 @@
-declare module '@postlight/mercury-parser' {
-  interface Mercury {
+declare module '@postlight/parser' {
+  interface Parser {
     parse(
       url: string,
       options?: {
@@ -27,8 +27,8 @@ declare module '@postlight/mercury-parser' {
     rendered_pages: number;
   }
 
-  const MercuryParser: Mercury;
-  export = MercuryParser;
+  const ParserInstance: Parser;
+  export = ParserInstance;
 }
 
 declare module 'react-pdf' {

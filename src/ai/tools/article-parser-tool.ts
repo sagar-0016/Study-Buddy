@@ -3,7 +3,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import Mercury from '@postlight/mercury-parser';
+import Parser from '@postlight/parser';
 
 const ArticleParserInputSchema = z.object({
     url: z.string().url().describe("The URL of the article to parse."),
@@ -22,7 +22,7 @@ export const fetchFullArticleContent = ai.defineTool(
     },
     async ({ url }) => {
         try {
-            const parsedArticle = await Mercury.parse(url, { contentType: 'html' });
+            const parsedArticle = await Parser.parse(url, { contentType: 'html' });
             let cleanContent = parsedArticle.content;
 
             if (cleanContent) {
