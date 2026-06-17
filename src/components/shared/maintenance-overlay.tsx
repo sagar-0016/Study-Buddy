@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Heart, Sparkles, User } from "lucide-react";
 
 export default function MaintenanceOverlay() {
   const [displayedText, setDisplayedText] = useState("");
@@ -56,98 +55,49 @@ export default function MaintenanceOverlay() {
           </h1>
         </div>
 
-        {/* Textless Interactive Button */}
-        <div className="h-16 flex items-center justify-center">
+        {/* Interactive Dot & Anchored Chat Bubble */}
+        <div className="relative flex flex-col items-center justify-center h-32 w-full max-w-sm">
           <AnimatePresence>
             {showButton && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8, y: 15 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1, 
-                  y: 0,
-                  boxShadow: [
-                    "0 0 0px rgba(16,185,129,0)",
-                    "0 0 20px rgba(16,185,129,0.2)",
-                    "0 0 0px rgba(16,185,129,0)"
-                  ]
-                }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ 
-                  opacity: { duration: 0.4 },
-                  scale: { duration: 0.4 },
-                  y: { duration: 0.4 },
-                  boxShadow: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
-                }}
-                whileHover={{ scale: 1.08, border: "1px solid rgba(16,185,129,0.5)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowPopup(true)}
-                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-emerald-400 transition-colors focus:outline-none"
-                aria-label="Interact"
-              >
-                <MessageCircle className="h-5 w-5 animate-pulse" />
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+              <div className="relative flex flex-col items-center">
+                {/* Chat Bubble Popup (Anchored directly above the dot) */}
+                <AnimatePresence>
+                  {showPopup && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: -16, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ type: "spring", damping: 15, stiffness: 220 }}
+                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl bg-emerald-600 px-4 py-3 text-zinc-100 text-sm shadow-[0_10px_25px_-5px_rgba(16,185,129,0.45)] leading-relaxed select-none"
+                    >
+                      <p className="font-sans font-medium text-center">
+                        AAPKA MAINTENANCE BHI KAREGE 😌, ABHI JAAO PADO 😤
+                      </p>
+                      {/* Triangle Arrow pointing down to the dot */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[8px] border-t-emerald-600 border-x-[8px] border-x-transparent" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* The Dot Button itself */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  whileHover={{ scale: 1.25 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowPopup((prev) => !prev)}
+                  className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 focus:outline-none shadow-[0_0_12px_rgba(16,185,129,0.7)] cursor-pointer"
+                  aria-label="Toggle Message"
+                >
+                  {/* Ping animation wrapper */}
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-              </motion.button>
+                </motion.button>
+              </div>
             )}
           </AnimatePresence>
         </div>
-
-        {/* Chat-like Popup Modal */}
-        <AnimatePresence>
-          {showPopup && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-              onClick={() => setShowPopup(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, y: 30, opacity: 0 }}
-                animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={{ scale: 0.9, y: 30, opacity: 0 }}
-                transition={{ type: "spring", damping: 20, stiffness: 150 }}
-                className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900/90 p-5 shadow-2xl backdrop-blur-xl text-left"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Chat Bubble Header / Sender info */}
-                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-zinc-800/60">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/20">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-zinc-300">Saurabh</div>
-                    <div className="text-[10px] text-zinc-500">Active now</div>
-                  </div>
-                </div>
-
-                {/* Message Bubble */}
-                <div className="flex items-start gap-2.5">
-                  <div className="relative rounded-2xl rounded-tl-none bg-emerald-600 px-4 py-3 text-zinc-100 text-sm shadow-md leading-relaxed">
-                    <p className="font-sans font-medium">
-                      AAPKA MAINTENANCE BHI KAREGE 😌, ABHI JAAO PADO 😤
-                    </p>
-                    {/* Tiny chat tail */}
-                    <div className="absolute top-0 -left-1.5 w-0 h-0 border-t-[8px] border-t-emerald-600 border-l-[8px] border-l-transparent" />
-                  </div>
-                </div>
-
-                {/* Close/Acknowledge Button */}
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => setShowPopup(false)}
-                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-850 px-4 py-2 text-xs font-semibold text-zinc-300 transition-colors focus:outline-none"
-                  >
-                    Okay, going to study!
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Subtle Bottom watermark */}
