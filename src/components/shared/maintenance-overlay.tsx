@@ -47,7 +47,7 @@ export default function MaintenanceOverlay() {
         {/* Terminal Header & Typed Text */}
         <div className="space-y-3">
           <div className="text-xs text-zinc-600 tracking-[0.2em] uppercase">System Status</div>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-wider text-zinc-100 flex items-center justify-center gap-1">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-wider text-white flex items-center justify-center gap-1">
             <span>{displayedText}</span>
             <motion.span
               animate={{ opacity: [1, 0, 1] }}
@@ -61,24 +61,24 @@ export default function MaintenanceOverlay() {
         <div className="relative flex flex-col items-center justify-center h-32 w-full max-w-sm">
           <AnimatePresence>
             {showButton && (
-              <div className="relative flex flex-col items-center">
-                {/* Chat Bubble Popup (Anchored directly above the dot) */}
+              <div className="relative flex items-center justify-center">
+                {/* Chat Bubble Popup (Anchored directly to the right of the dot) */}
                 <AnimatePresence>
                   {showPopup && (
                     <motion.div
                       onClick={(e) => e.stopPropagation()}
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: -16, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, x: 20, scale: 1 }}
+                      exit={{ opacity: 0, x: 10, scale: 0.95 }}
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
-                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl border border-white/20 bg-zinc-900/95 px-4 py-3 text-emerald-400 text-sm shadow-2xl backdrop-blur-md leading-relaxed select-none"
+                      className="absolute left-full ml-3 z-20 w-72 rounded-2xl bg-white px-4 py-3 text-zinc-950 text-sm shadow-2xl leading-relaxed select-none border-none"
                     >
                       <p className="font-mono font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
                         <span className="whitespace-nowrap">ABHI JAAO PADHO 😤</span>
                       </p>
-                      {/* Triangle Arrow pointing down to the dot */}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[8px] border-t-zinc-900/95 border-x-[8px] border-x-transparent" />
+                      {/* Triangle Arrow pointing left to the dot */}
+                      <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-r-[8px] border-r-white border-y-[8px] border-y-transparent" />
                     </motion.div>
                   )}
                 </AnimatePresence>
