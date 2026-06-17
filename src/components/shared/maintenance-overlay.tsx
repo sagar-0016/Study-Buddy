@@ -14,19 +14,15 @@ export default function MaintenanceOverlay() {
 
   // Typewriter effect
   useEffect(() => {
-    let index = 0;
-    const intervalId = setInterval(() => {
-      if (index < fullText.length) {
-        setDisplayedText((prev) => prev + fullText.charAt(index));
-        index++;
-      } else {
-        clearInterval(intervalId);
-        setTypingComplete(true);
-      }
-    }, 120);
-
-    return () => clearInterval(intervalId);
-  }, []);
+    if (displayedText.length < fullText.length) {
+      const timeoutId = setTimeout(() => {
+        setDisplayedText(fullText.slice(0, displayedText.length + 1));
+      }, 120);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setTypingComplete(true);
+    }
+  }, [displayedText]);
 
   // Show button after typing is complete
   useEffect(() => {
