@@ -41,8 +41,7 @@ export default function MaintenanceOverlay() {
       {/* Premium subtle background grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370f_1px,transparent_1px),linear-gradient(to_bottom,#1f29370f_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
       
-      {/* Soft color radial ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
+
 
       <div className="z-10 flex flex-col items-center gap-8 px-4 text-center">
         {/* Terminal Header & Typed Text */}
@@ -72,7 +71,7 @@ export default function MaintenanceOverlay() {
                       animate={{ opacity: 1, y: -16, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
-                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl border border-emerald-500/20 bg-zinc-900/95 px-4 py-3 text-emerald-400 text-sm shadow-[0_8px_32px_rgba(16,185,129,0.15)] backdrop-blur-md leading-relaxed select-none"
+                      className="absolute bottom-full mb-3 z-20 w-72 rounded-2xl border border-emerald-500/20 bg-zinc-900/95 px-4 py-3 text-emerald-400 text-sm shadow-2xl backdrop-blur-md leading-relaxed select-none"
                     >
                       <p className="font-mono font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
