@@ -34,7 +34,10 @@ export default function MaintenanceOverlay() {
   }, [typingComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-zinc-950 font-mono text-zinc-100 selection:bg-emerald-500/20 selection:text-emerald-300">
+    <div 
+      onClick={() => setShowPopup(false)}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-zinc-950 font-mono text-zinc-100 selection:bg-emerald-500/20 selection:text-emerald-300"
+    >
       {/* Premium subtle background grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370f_1px,transparent_1px),linear-gradient(to_bottom,#1f29370f_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
       
@@ -64,6 +67,7 @@ export default function MaintenanceOverlay() {
                 <AnimatePresence>
                   {showPopup && (
                     <motion.div
+                      onClick={(e) => e.stopPropagation()}
                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
                       animate={{ opacity: 1, y: -16, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -82,13 +86,16 @@ export default function MaintenanceOverlay() {
 
                 {/* The Dot Button itself */}
                 <motion.button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPopup((prev) => !prev);
+                  }}
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                   whileHover={{ scale: 1.25 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowPopup((prev) => !prev)}
                   className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 focus:outline-none shadow-[0_0_12px_rgba(16,185,129,0.7)] cursor-pointer"
                   aria-label="Toggle Message"
                 >
@@ -103,7 +110,7 @@ export default function MaintenanceOverlay() {
 
       {/* Subtle Bottom watermark */}
       <div className="absolute bottom-6 text-[10px] text-zinc-700 tracking-wider">
-        STUDY BUDDY v1.0
+        STUDY BUDDY v6.9
       </div>
     </div>
   );
