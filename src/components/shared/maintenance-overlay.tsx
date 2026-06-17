@@ -76,7 +76,7 @@ export default function MaintenanceOverlay() {
                     >
                       <p className="font-sans font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
-                        <span className="whitespace-nowrap">ABHI JAAO PADO 😤</span>
+                        <span className="whitespace-nowrap">ABHI JAAO PADHO 😤</span>
                       </p>
                       {/* Triangle Arrow pointing down to the dot */}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-[8px] border-t-emerald-600 border-x-[8px] border-x-transparent" />
