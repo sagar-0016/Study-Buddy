@@ -154,7 +154,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
 import MaintenanceOverlay from '@/components/shared/maintenance-overlay';
 
-const IS_MAINTENANCE = true; // Set to false to disable maintenance mode
+const IS_MAINTENANCE = false; // Set to false to disable maintenance mode
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   if (IS_MAINTENANCE) {
