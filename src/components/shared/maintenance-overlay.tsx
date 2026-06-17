@@ -71,14 +71,14 @@ export default function MaintenanceOverlay() {
                       animate={{ opacity: 1, x: 20, scale: 1 }}
                       exit={{ opacity: 0, x: 10, scale: 0.95 }}
                       transition={{ type: "spring", damping: 15, stiffness: 220 }}
-                      className="absolute left-full -top-2 ml-3 z-20 w-72 rounded-2xl bg-white p-4 text-zinc-950 text-sm shadow-2xl leading-relaxed select-none border-none"
+                      className="absolute left-full -top-2 ml-3 z-20 w-72 rounded-2xl rounded-tl-none bg-white p-4 text-zinc-950 text-sm shadow-2xl leading-relaxed select-none border-none"
                     >
                       <p className="font-mono font-medium text-center flex flex-col gap-1 items-center">
                         <span className="whitespace-nowrap">AAPKA MAINTENANCE BHI KAREGE 😌,</span>
                         <span className="whitespace-nowrap">ABHI JAAO PADHO 😤</span>
                       </p>
-                      {/* Triangle Arrow pointing left to the dot (chat tail style) */}
-                      <div className="absolute right-full top-[11px] w-0 h-0 border-r-[8px] border-r-white border-y-[8px] border-y-transparent" />
+                      {/* Triangle Arrow pointing left to the dot (chat tail style flush with top) */}
+                      <div className="absolute right-full top-0 w-0 h-0 border-r-[8px] border-r-white border-b-[8px] border-b-transparent" />
                     </motion.div>
                   )}
                 </AnimatePresence>
