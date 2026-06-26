@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import cordeliaImg from "@/assets/Cordelia Cruises.jpg";
 
 export default function MaintenanceOverlay() {
   const [displayedText, setDisplayedText] = useState("");
@@ -38,9 +40,19 @@ export default function MaintenanceOverlay() {
       onClick={() => setShowPopup(false)}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-zinc-950 font-mono text-zinc-100 selection:bg-emerald-500/20 selection:text-emerald-300"
     >
-      {/* Premium subtle background grid */}
+      {/* Background image at 20% brightness */}
+      <div className="absolute inset-0 pointer-events-none">
+        <Image
+          src={cordeliaImg}
+          alt="Background"
+          fill
+          className="object-cover brightness-[0.20]"
+          priority
+        />
+      </div>
+
+      {/* Premium subtle background grid overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370f_1px,transparent_1px),linear-gradient(to_bottom,#1f29370f_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-      
 
 
       <div className="z-10 flex flex-col items-center gap-8 px-4 text-center">
